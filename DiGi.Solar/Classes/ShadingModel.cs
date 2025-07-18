@@ -88,31 +88,6 @@ namespace DiGi.Solar.Classes
             return shadingRelationCluster.AddRelation(shadingElement, shadingCalculationResults_Temp) != null;
         }
 
-        public List<TShadingElement> GetShadingElements<TShadingElement>(bool? shadingOnly = null) where TShadingElement : IShadingElement
-        {
-            return shadingRelationCluster.GetValues<TShadingElement>(x => shadingOnly != null && shadingOnly.HasValue ? x.ShadingOnly == shadingOnly.Value : true)?.ConvertAll(x => Core.Query.Clone(x));
-        }
-
-        public bool Update(IShadingElement shadingElement)
-        {
-            if (shadingElement == null)
-            {
-                return false;
-            }
-
-            return shadingRelationCluster.Add(Core.Query.Clone(shadingElement));
-        }
-
-        public bool Update(IShadingCalculationResult shadingCalculationResult)
-        {
-            if (shadingCalculationResult == null)
-            {
-                return false;
-            }
-
-            return shadingRelationCluster.Add(Core.Query.Clone(shadingCalculationResult));
-        }
-
         public List<TShadingCalculationResult> GetShadingCalculationResults<TShadingCalculationResult>() where TShadingCalculationResult : IShadingCalculationResult
         {
             return shadingRelationCluster.GetValues<TShadingCalculationResult>()?.ConvertAll(x => Core.Query.Clone(x));
@@ -120,7 +95,7 @@ namespace DiGi.Solar.Classes
 
         public List<TShadingCalculationResult> GetShadingCalculationResults<TShadingCalculationResult>(IShadingElement shadingElement) where TShadingCalculationResult : IShadingCalculationResult
         {
-            if(shadingElement == null)
+            if (shadingElement == null)
             {
                 return null;
             }
@@ -134,11 +109,16 @@ namespace DiGi.Solar.Classes
             return shadingRelationCluster.GetShadingCalculationResults<TShadingCalculationResult>(shadingCalculationResultRelation)?.ConvertAll(x => Core.Query.Clone(x));
         }
 
+        public List<TShadingElement> GetShadingElements<TShadingElement>(bool? shadingOnly = null) where TShadingElement : IShadingElement
+        {
+            return shadingRelationCluster.GetValues<TShadingElement>(x => shadingOnly != null && shadingOnly.HasValue ? x.ShadingOnly == shadingOnly.Value : true)?.ConvertAll(x => Core.Query.Clone(x));
+        }
+
         public bool TryGetShadingFactor(IShadingElement shadingElement, DateTime dateTime, out double factor, bool interpolation = true)
         {
             factor = double.NaN;
 
-            if(shadingElement == null || shadingElement.ShadingOnly)
+            if (shadingElement == null || shadingElement.ShadingOnly)
             {
                 return false;
             }
@@ -168,18 +148,18 @@ namespace DiGi.Solar.Classes
             }
 
             List<IShadingCalculationResult> shadingCalculationResults = shadingRelationCluster.GetShadingCalculationResults<IShadingCalculationResult>(shadingCalculationResultRelation);
-            if(shadingCalculationResults == null)
+            if (shadingCalculationResults == null)
             {
                 return false;
             }
 
             List<Tuple<long, IShadingCalculationResult>> tuples = new List<Tuple<long, IShadingCalculationResult>>();
-            foreach(IShadingCalculationResult shadingCalculationResult in shadingCalculationResults)
+            foreach (IShadingCalculationResult shadingCalculationResult in shadingCalculationResults)
             {
-                if(shadingCalculationResult.DateTime.Equals(dateTime))
+                if (shadingCalculationResult.DateTime.Equals(dateTime))
                 {
                     double area_Temp = shadingCalculationResult.Area;
-                    if(double.IsNaN(area_Temp))
+                    if (double.IsNaN(area_Temp))
                     {
                         continue;
                     }
@@ -191,12 +171,12 @@ namespace DiGi.Solar.Classes
                 tuples.Add(new Tuple<long, IShadingCalculationResult>(shadingCalculationResult.DateTime.Ticks, shadingCalculationResult));
             }
 
-            if(!interpolation)
+            if (!interpolation)
             {
                 return false;
             }
 
-            if(tuples.Count == 0)
+            if (tuples.Count == 0)
             {
                 return false;
             }
@@ -205,19 +185,19 @@ namespace DiGi.Solar.Classes
 
             long ticks = dateTime.Ticks;
 
-            if(ticks < tuples.First().Item1)
+            if (ticks < tuples.First().Item1)
             {
                 return false;
             }
 
-            if(ticks > tuples.Last().Item1)
+            if (ticks > tuples.Last().Item1)
             {
                 return false;
             }
 
             for (int i = 0; i < tuples.Count - 1; i++)
             {
-                if(ticks > tuples[i].Item1)
+                if (ticks > tuples[i].Item1)
                 {
                     double ticks_Start = System.Convert.ToDouble(tuples[i - 1].Item1);
                     double area_Start = tuples[i - 1].Item2.Area;
@@ -230,6 +210,26 @@ namespace DiGi.Solar.Classes
             }
 
             return false;
+        }
+
+        public bool Update(IShadingElement shadingElement)
+        {
+            if (shadingElement == null)
+            {
+                return false;
+            }
+
+            return shadingRelationCluster.Add(Core.Query.Clone(shadingElement));
+        }
+
+        public bool Update(IShadingCalculationResult shadingCalculationResult)
+        {
+            if (shadingCalculationResult == null)
+            {
+                return false;
+            }
+
+            return shadingRelationCluster.Add(Core.Query.Clone(shadingCalculationResult));
         }
     }
 }
