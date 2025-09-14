@@ -6,7 +6,7 @@ namespace DiGi.Solar.Classes
     public class NumericalShadingCalculationResult : ShadingCalculationResult
     {
         [JsonInclude, JsonPropertyName("Area")]
-        private double area;
+        private readonly double area;
 
         public NumericalShadingCalculationResult(System.DateTime dateTime, double area)
             : base(dateTime)

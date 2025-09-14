@@ -8,7 +8,7 @@ namespace DiGi.Solar.ComputeSharp
 {
     public static partial class Create
     {
-        public static IShadingCalculationResult ShadingCalculationResult(this ShadingCalculationType shadingCalculationType, DateTime dateTime, Plane plane, IEnumerable<IPolygonalFace2D> polygonalFace2Ds)
+        public static IShadingCalculationResult? ShadingCalculationResult(this ShadingCalculationType shadingCalculationType, DateTime dateTime, Plane? plane, IEnumerable<IPolygonalFace2D>? polygonalFace2Ds)
         {
             if(shadingCalculationType == ShadingCalculationType.Undefined)
             {

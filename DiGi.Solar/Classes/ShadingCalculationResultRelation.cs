@@ -7,7 +7,7 @@ namespace DiGi.Solar.Classes
     public class ShadingCalculationResultRelation : OneToManyDirectionalRelation<IShadingElement, IShadingCalculationResult>, IShadingRelation
     {
         public ShadingCalculationResultRelation(IShadingElement shadingElement, IShadingCalculationResult shadingCalculationResult)
-            : base(shadingElement, new List<IShadingCalculationResult>() { shadingCalculationResult })
+            : base(shadingElement, [shadingCalculationResult])
         {
 
         }

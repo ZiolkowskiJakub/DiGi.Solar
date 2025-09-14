@@ -1,4 +1,5 @@
-﻿using DiGi.Geometry.Planar.Interfaces;
+﻿using DiGi.Core;
+using DiGi.Geometry.Planar.Interfaces;
 using DiGi.Geometry.Spatial;
 using DiGi.Geometry.Spatial.Classes;
 using DiGi.Geometry.Spatial.Interfaces;
@@ -11,29 +12,29 @@ namespace DiGi.Solar.Classes
     public class GeometricalShadingCalculationResult : ShadingCalculationResult
     {
         [JsonInclude, JsonPropertyName("Plane")]
-        private Plane plane;
+        private readonly Plane? plane;
 
         [JsonInclude, JsonPropertyName("PolygonalFace2Ds")]
-        private List<IPolygonalFace2D> polygonalFace2Ds;
+        private readonly List<IPolygonalFace2D>? polygonalFace2Ds;
 
-        public GeometricalShadingCalculationResult(System.DateTime dateTime, Plane plane, IEnumerable<IPolygonalFace2D> polygonalFace2Ds)
+        public GeometricalShadingCalculationResult(System.DateTime dateTime, Plane? plane, IEnumerable<IPolygonalFace2D>? polygonalFace2Ds)
             : base(dateTime)
         {
             this.plane = Core.Query.Clone(plane);
-            this.polygonalFace2Ds = Core.Query.Clone(polygonalFace2Ds);
+            this.polygonalFace2Ds = Core.Query.CloneAndFilterNulls(polygonalFace2Ds);
         }
 
-        public GeometricalShadingCalculationResult(GeometricalShadingCalculationResult geometricalShadingCalculationResult)
+        public GeometricalShadingCalculationResult(GeometricalShadingCalculationResult? geometricalShadingCalculationResult)
             : base(geometricalShadingCalculationResult)
         {
             if(geometricalShadingCalculationResult != null)
             {
                 plane = Core.Query.Clone(geometricalShadingCalculationResult.plane);
-                polygonalFace2Ds = Core.Query.Clone(geometricalShadingCalculationResult.polygonalFace2Ds);
+                polygonalFace2Ds = Core.Query.CloneAndFilterNulls(geometricalShadingCalculationResult.polygonalFace2Ds);
             }
         }
 
-        public GeometricalShadingCalculationResult(JsonObject jsonObject)
+        public GeometricalShadingCalculationResult(JsonObject? jsonObject)
             : base(jsonObject)
         {
 
@@ -72,7 +73,7 @@ namespace DiGi.Solar.Classes
         }
 
         [JsonIgnore]
-        public Plane Plane
+        public Plane? Plane
         {
             get
             {
@@ -81,22 +82,22 @@ namespace DiGi.Solar.Classes
         }
 
         [JsonIgnore]
-        public List<IPolygonalFace2D> PolygonalFace2Ds
+        public List<IPolygonalFace2D>? PolygonalFace2Ds
         {
             get
             {
-                return Core.Query.Clone(polygonalFace2Ds);
+                return Core.Query.CloneAndFilterNulls(polygonalFace2Ds);
             }
         }
 
-        public List<IPolygonalFace3D> GetPolygonalFace3Ds()
+        public List<IPolygonalFace3D>? GetPolygonalFace3Ds()
         {
             if(plane == null || polygonalFace2Ds == null)
             {
                 return null;
             }
 
-            return polygonalFace2Ds.ConvertAll(plane.Convert);
+            return polygonalFace2Ds.ConvertAll(plane.Convert)?.FilterNulls();
         }
 
     }

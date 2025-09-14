@@ -1,5 +1,4 @@
 ﻿using DiGi.Core.Classes;
-using DiGi.Geometry.Spatial.Classes;
 using DiGi.Geometry.Spatial.Interfaces;
 using DiGi.Solar.Interfaces;
 using System;
@@ -11,15 +10,15 @@ namespace DiGi.Solar.Classes
     public class ShadingElement : GuidObject, IShadingElement
     {
         [JsonInclude, JsonPropertyName("PolygonalFace3D")]
-        private IPolygonalFace3D polygonalFace3D;
+        private readonly IPolygonalFace3D? polygonalFace3D;
 
         [JsonInclude, JsonPropertyName("Reference")]
-        private string reference;
+        private readonly string? reference;
 
         [JsonInclude, JsonPropertyName("ShadingOnly")]
-        private bool shadingOnly = false;
+        private readonly bool shadingOnly = false;
 
-        public ShadingElement(Guid guid, string reference, IPolygonalFace3D polygonalFace3D, bool shadingOnly)
+        public ShadingElement(Guid guid, string? reference, IPolygonalFace3D? polygonalFace3D, bool shadingOnly)
             : base(guid)
         {
             this.reference = reference;
@@ -27,7 +26,7 @@ namespace DiGi.Solar.Classes
             this.shadingOnly = shadingOnly;
         }
 
-        public ShadingElement(string reference, IPolygonalFace3D polygonalFace3D, bool shadingOnly)
+        public ShadingElement(string? reference, IPolygonalFace3D? polygonalFace3D, bool shadingOnly)
             : base()
         {
             this.reference = reference;
@@ -35,14 +34,14 @@ namespace DiGi.Solar.Classes
             this.shadingOnly = shadingOnly;
         }
 
-        public ShadingElement(IPolygonalFace3D polygonalFace3D, bool shadingOnly)
+        public ShadingElement(IPolygonalFace3D? polygonalFace3D, bool shadingOnly)
             : base()
         {
             this.polygonalFace3D = Core.Query.Clone(polygonalFace3D);
             this.shadingOnly = shadingOnly;
         }
 
-        public ShadingElement(ShadingElement shadingElement)
+        public ShadingElement(ShadingElement? shadingElement)
             : base(shadingElement)
         {
             if (shadingElement != null)
@@ -53,14 +52,14 @@ namespace DiGi.Solar.Classes
             }
         }
 
-        public ShadingElement(JsonObject jsonObject)
+        public ShadingElement(JsonObject? jsonObject)
             : base(jsonObject)
         {
 
         }
 
         [JsonIgnore]
-        public IPolygonalFace3D PolygonalFace3D
+        public IPolygonalFace3D? PolygonalFace3D
         {
             get
             {
@@ -70,7 +69,7 @@ namespace DiGi.Solar.Classes
         }
 
         [JsonIgnore]
-        public string Reference
+        public string? Reference
         {
             get
             {

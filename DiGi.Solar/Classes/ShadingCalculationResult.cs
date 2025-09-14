@@ -1,5 +1,6 @@
 ﻿using DiGi.Core.Classes;
 using DiGi.Solar.Interfaces;
+using System;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
@@ -8,15 +9,15 @@ namespace DiGi.Solar.Classes
     public abstract class ShadingCalculationResult : GuidResult<IShadingElement>, IShadingCalculationResult
     {
         [JsonInclude, JsonPropertyName("DateTime")]
-        private System.DateTime dateTime;
+        private readonly DateTime dateTime = DateTime.MinValue;
 
-        public ShadingCalculationResult(System.DateTime dateTime)
+        public ShadingCalculationResult(DateTime dateTime)
             : base()
         {
             this.dateTime = dateTime;
         }
 
-        public ShadingCalculationResult(ShadingCalculationResult shadingCalculationResult)
+        public ShadingCalculationResult(ShadingCalculationResult? shadingCalculationResult)
             : base(shadingCalculationResult)
         {
             if(shadingCalculationResult != null)
@@ -25,14 +26,14 @@ namespace DiGi.Solar.Classes
             }
         }
 
-        public ShadingCalculationResult(JsonObject jsonObject)
+        public ShadingCalculationResult(JsonObject? jsonObject)
             : base(jsonObject)
         {
 
         }
 
         [JsonIgnore]
-        public System.DateTime DateTime
+        public DateTime DateTime
         {
             get 
             { 
