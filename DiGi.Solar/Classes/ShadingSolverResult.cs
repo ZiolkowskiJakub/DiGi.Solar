@@ -6,27 +6,27 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.Solar.Classes
 {
-    public abstract class ShadingCalculationResult : GuidResult<IShadingElement>, IShadingCalculationResult
+    public abstract class ShadingSolverResult : GuidResult<IShadingElement>, IShadingSolverResult
     {
         [JsonInclude, JsonPropertyName("DateTime")]
         private readonly DateTime dateTime = DateTime.MinValue;
 
-        public ShadingCalculationResult(DateTime dateTime)
+        public ShadingSolverResult(DateTime dateTime)
             : base()
         {
             this.dateTime = dateTime;
         }
 
-        public ShadingCalculationResult(ShadingCalculationResult? shadingCalculationResult)
-            : base(shadingCalculationResult)
+        public ShadingSolverResult(ShadingSolverResult? shadingSolverResult)
+            : base(shadingSolverResult)
         {
-            if(shadingCalculationResult != null)
+            if(shadingSolverResult != null)
             {
-                dateTime = shadingCalculationResult.dateTime;
+                dateTime = shadingSolverResult.dateTime;
             }
         }
 
-        public ShadingCalculationResult(JsonObject? jsonObject)
+        public ShadingSolverResult(JsonObject? jsonObject)
             : base(jsonObject)
         {
 

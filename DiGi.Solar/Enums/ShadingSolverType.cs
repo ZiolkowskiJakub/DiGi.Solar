@@ -2,7 +2,7 @@
 
 namespace DiGi.Solar.Enums
 {
-    public enum ShadingCalculationType
+    public enum ShadingSolverType
     {
         [Description("Undefined")] Undefined,
         [Description("Numerical")] Numerical,

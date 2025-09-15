@@ -3,27 +3,27 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.Solar.Classes
 {
-    public class NumericalShadingCalculationResult : ShadingCalculationResult
+    public class NumericalShadingSolverResult : ShadingSolverResult
     {
         [JsonInclude, JsonPropertyName("Area")]
         private readonly double area;
 
-        public NumericalShadingCalculationResult(System.DateTime dateTime, double area)
+        public NumericalShadingSolverResult(System.DateTime dateTime, double area)
             : base(dateTime)
         {
             this.area = area;
         }
 
-        public NumericalShadingCalculationResult(NumericalShadingCalculationResult numericalShadingCalculationResult)
-            : base(numericalShadingCalculationResult)
+        public NumericalShadingSolverResult(NumericalShadingSolverResult numericalShadingSolverResult)
+            : base(numericalShadingSolverResult)
         {
-            if(numericalShadingCalculationResult != null)
+            if(numericalShadingSolverResult != null)
             {
-                area = numericalShadingCalculationResult.area;
+                area = numericalShadingSolverResult.area;
             }
         }
 
-        public NumericalShadingCalculationResult(JsonObject jsonObject)
+        public NumericalShadingSolverResult(JsonObject? jsonObject)
             : base(jsonObject)
         {
 

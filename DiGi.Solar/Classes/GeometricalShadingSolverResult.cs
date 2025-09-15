@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.Solar.Classes
 {
-    public class GeometricalShadingCalculationResult : ShadingCalculationResult
+    public class GeometricalShadingSolverResult : ShadingSolverResult
     {
         [JsonInclude, JsonPropertyName("Plane")]
         private readonly Plane? plane;
@@ -17,24 +17,24 @@ namespace DiGi.Solar.Classes
         [JsonInclude, JsonPropertyName("PolygonalFace2Ds")]
         private readonly List<IPolygonalFace2D>? polygonalFace2Ds;
 
-        public GeometricalShadingCalculationResult(System.DateTime dateTime, Plane? plane, IEnumerable<IPolygonalFace2D>? polygonalFace2Ds)
+        public GeometricalShadingSolverResult(System.DateTime dateTime, Plane? plane, IEnumerable<IPolygonalFace2D>? polygonalFace2Ds)
             : base(dateTime)
         {
             this.plane = Core.Query.Clone(plane);
             this.polygonalFace2Ds = Core.Query.CloneAndFilterNulls(polygonalFace2Ds);
         }
 
-        public GeometricalShadingCalculationResult(GeometricalShadingCalculationResult? geometricalShadingCalculationResult)
-            : base(geometricalShadingCalculationResult)
+        public GeometricalShadingSolverResult(GeometricalShadingSolverResult? geometricalShadingSolverResult)
+            : base(geometricalShadingSolverResult)
         {
-            if(geometricalShadingCalculationResult != null)
+            if(geometricalShadingSolverResult != null)
             {
-                plane = Core.Query.Clone(geometricalShadingCalculationResult.plane);
-                polygonalFace2Ds = Core.Query.CloneAndFilterNulls(geometricalShadingCalculationResult.polygonalFace2Ds);
+                plane = Core.Query.Clone(geometricalShadingSolverResult.plane);
+                polygonalFace2Ds = Core.Query.CloneAndFilterNulls(geometricalShadingSolverResult.polygonalFace2Ds);
             }
         }
 
-        public GeometricalShadingCalculationResult(JsonObject? jsonObject)
+        public GeometricalShadingSolverResult(JsonObject? jsonObject)
             : base(jsonObject)
         {
 

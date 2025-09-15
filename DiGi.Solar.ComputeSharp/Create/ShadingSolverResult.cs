@@ -8,25 +8,25 @@ namespace DiGi.Solar.ComputeSharp
 {
     public static partial class Create
     {
-        public static IShadingCalculationResult? ShadingCalculationResult(this ShadingCalculationType shadingCalculationType, DateTime dateTime, Plane? plane, IEnumerable<IPolygonalFace2D>? polygonalFace2Ds)
+        public static IShadingSolverResult? ShadingSolverResult(this ShadingSolverType shadingSolverType, DateTime dateTime, Plane? plane, IEnumerable<IPolygonalFace2D>? polygonalFace2Ds)
         {
-            if(shadingCalculationType == ShadingCalculationType.Undefined)
+            if(shadingSolverType == ShadingSolverType.Undefined)
             {
                 return null;
             }
 
-            switch(shadingCalculationType)
+            switch(shadingSolverType)
             {
-                case ShadingCalculationType.Geometrical:
+                case ShadingSolverType.Geometrical:
                     if(plane == null)
                     {
                         return null;
                     }
 
-                    return new GeometricalShadingCalculationResult(dateTime, plane, polygonalFace2Ds);
+                    return new GeometricalShadingSolverResult(dateTime, plane, polygonalFace2Ds);
 
 
-                case ShadingCalculationType.Numerical:
+                case ShadingSolverType.Numerical:
                     double area = 0;
                     if(polygonalFace2Ds != null)
                     {
@@ -47,7 +47,7 @@ namespace DiGi.Solar.ComputeSharp
                         }
                     }
 
-                    return new NumericalShadingCalculationResult(dateTime, area);
+                    return new NumericalShadingSolverResult(dateTime, area);
             }
 
             return null;

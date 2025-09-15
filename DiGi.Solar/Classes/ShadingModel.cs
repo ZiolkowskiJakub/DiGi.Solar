@@ -64,9 +64,9 @@ namespace DiGi.Solar.Classes
             }
         }
 
-        public bool Assign(IShadingElement? shadingElement, IEnumerable<IShadingCalculationResult>? shadingCalculationResults)
+        public bool Assign(IShadingElement? shadingElement, IEnumerable<IShadingSolverResult>? shadingSolverResults)
         {
-            if (shadingElement == null || shadingCalculationResults == null)
+            if (shadingElement == null || shadingSolverResults == null)
             {
                 return false;
             }
@@ -76,37 +76,37 @@ namespace DiGi.Solar.Classes
                 return false;
             }
 
-            List<IShadingCalculationResult> shadingCalculationResults_Temp = [];
-            foreach (IShadingCalculationResult shadingCalculationResult in shadingCalculationResults)
+            List<IShadingSolverResult> shadingSolverResults_Temp = [];
+            foreach (IShadingSolverResult shadingSolverResult in shadingSolverResults)
             {
-                if (Update(shadingCalculationResult))
+                if (Update(shadingSolverResult))
                 {
-                    shadingCalculationResults_Temp.Add(shadingCalculationResult);
+                    shadingSolverResults_Temp.Add(shadingSolverResult);
                 }
             }
 
-            return shadingRelationCluster.AddRelation(shadingElement, shadingCalculationResults_Temp) != null;
+            return shadingRelationCluster.AddRelation(shadingElement, shadingSolverResults_Temp) != null;
         }
 
-        public List<TShadingCalculationResult>? GetShadingCalculationResults<TShadingCalculationResult>() where TShadingCalculationResult : IShadingCalculationResult
+        public List<TShadingSolverResult>? GetShadingSolverResults<TShadingSolverResult>() where TShadingSolverResult : IShadingSolverResult
         {
-            return shadingRelationCluster.GetValues<TShadingCalculationResult>()?.CloneAndFilterNulls();
+            return shadingRelationCluster.GetValues<TShadingSolverResult>()?.CloneAndFilterNulls();
         }
 
-        public List<TShadingCalculationResult>? GetShadingCalculationResults<TShadingCalculationResult>(IShadingElement? shadingElement) where TShadingCalculationResult : IShadingCalculationResult
+        public List<TShadingSolverResult>? GetShadingSolverResults<TShadingSolverResult>(IShadingElement? shadingElement) where TShadingSolverResult : IShadingSolverResult
         {
             if (shadingElement == null)
             {
                 return null;
             }
 
-            ShadingCalculationResultRelation? shadingCalculationResultRelation = shadingRelationCluster.GetRelation<ShadingCalculationResultRelation>(Core.Create.UniqueReference(shadingElement));
-            if (shadingCalculationResultRelation == null)
+            ShadingSolverResultRelation? shadingSolverResultRelation = shadingRelationCluster.GetRelation<ShadingSolverResultRelation>(Core.Create.UniqueReference(shadingElement));
+            if (shadingSolverResultRelation == null)
             {
                 return null;
             }
 
-            return shadingRelationCluster.GetShadingCalculationResults<TShadingCalculationResult>(shadingCalculationResultRelation)?.CloneAndFilterNulls();
+            return shadingRelationCluster.GetShadingSolverResults<TShadingSolverResult>(shadingSolverResultRelation)?.CloneAndFilterNulls();
         }
 
         public List<TShadingElement>? GetShadingElements<TShadingElement>(bool? shadingOnly = null) where TShadingElement : IShadingElement
@@ -141,24 +141,24 @@ namespace DiGi.Solar.Classes
                 return true;
             }
 
-            ShadingCalculationResultRelation? shadingCalculationResultRelation = shadingRelationCluster.GetRelation<ShadingCalculationResultRelation>(Create.UniqueReference(shadingElement));
-            if (shadingCalculationResultRelation is null)
+            ShadingSolverResultRelation? shadingSolverResultRelation = shadingRelationCluster.GetRelation<ShadingSolverResultRelation>(Create.UniqueReference(shadingElement));
+            if (shadingSolverResultRelation is null)
             {
                 return false;
             }
 
-            List<IShadingCalculationResult>? shadingCalculationResults = shadingRelationCluster.GetShadingCalculationResults<IShadingCalculationResult>(shadingCalculationResultRelation);
-            if (shadingCalculationResults is null)
+            List<IShadingSolverResult>? shadingSolverResults = shadingRelationCluster.GetShadingSolverResults<IShadingSolverResult>(shadingSolverResultRelation);
+            if (shadingSolverResults is null)
             {
                 return false;
             }
 
-            List<Tuple<long, IShadingCalculationResult>> tuples = [];
-            foreach (IShadingCalculationResult shadingCalculationResult in shadingCalculationResults)
+            List<Tuple<long, IShadingSolverResult>> tuples = [];
+            foreach (IShadingSolverResult shadingSolverResult in shadingSolverResults)
             {
-                if (shadingCalculationResult.DateTime.Equals(dateTime))
+                if (shadingSolverResult.DateTime.Equals(dateTime))
                 {
-                    double area_Temp = shadingCalculationResult.Area;
+                    double area_Temp = shadingSolverResult.Area;
                     if (double.IsNaN(area_Temp))
                     {
                         continue;
@@ -168,7 +168,7 @@ namespace DiGi.Solar.Classes
                     return true;
                 }
 
-                tuples.Add(new Tuple<long, IShadingCalculationResult>(shadingCalculationResult.DateTime.Ticks, shadingCalculationResult));
+                tuples.Add(new Tuple<long, IShadingSolverResult>(shadingSolverResult.DateTime.Ticks, shadingSolverResult));
             }
 
             if (!interpolation)
@@ -222,14 +222,14 @@ namespace DiGi.Solar.Classes
             return shadingRelationCluster.Add(Core.Query.Clone(shadingElement));
         }
 
-        public bool Update(IShadingCalculationResult shadingCalculationResult)
+        public bool Update(IShadingSolverResult shadingSolverResult)
         {
-            if (shadingCalculationResult == null)
+            if (shadingSolverResult == null)
             {
                 return false;
             }
 
-            return shadingRelationCluster.Add(Core.Query.Clone(shadingCalculationResult));
+            return shadingRelationCluster.Add(Core.Query.Clone(shadingSolverResult));
         }
     }
 }

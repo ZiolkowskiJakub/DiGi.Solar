@@ -27,31 +27,31 @@ namespace DiGi.Solar.Classes
 
         }
 
-        public ShadingCalculationResultRelation? AddRelation(IShadingElement? shadingElement, IEnumerable<IShadingCalculationResult>? shadingCalculationResults)
+        public ShadingSolverResultRelation? AddRelation(IShadingElement? shadingElement, IEnumerable<IShadingSolverResult>? shadingSolverResults)
         {
-            if (shadingElement == null || shadingCalculationResults == null)
+            if (shadingElement == null || shadingSolverResults == null)
             {
                 return null;
             }
 
-            ShadingCalculationResultRelation? shadingCalculationResultRelation = GetRelation<ShadingCalculationResultRelation>(Core.Create.UniqueReference(shadingElement));
-            if (shadingCalculationResultRelation != null)
+            ShadingSolverResultRelation? shadingSolverResultRelation = GetRelation<ShadingSolverResultRelation>(Core.Create.UniqueReference(shadingElement));
+            if (shadingSolverResultRelation != null)
             {
-                Remove(shadingCalculationResultRelation);
+                Remove(shadingSolverResultRelation);
             }
 
-            return AddRelation(new ShadingCalculationResultRelation(shadingElement, shadingCalculationResults));
+            return AddRelation(new ShadingSolverResultRelation(shadingElement, shadingSolverResults));
         }
 
-        public List<TShadingCalculationResult>? GetShadingCalculationResults<TShadingCalculationResult>(ShadingCalculationResultRelation? shadingCalculationResultRelation) where TShadingCalculationResult : IShadingCalculationResult
+        public List<TShadingSolverResult>? GetShadingSolverResults<TShadingSolverResult>(ShadingSolverResultRelation? shadingSolverResultRelation) where TShadingSolverResult : IShadingSolverResult
         {
-            List<IUniqueReference>? uniqueReferences = shadingCalculationResultRelation?.UniqueReferences_To;
+            List<IUniqueReference>? uniqueReferences = shadingSolverResultRelation?.UniqueReferences_To;
             if (uniqueReferences == null)
             {
                 return null;
             }
 
-            List<TShadingCalculationResult> result = [];
+            List<TShadingSolverResult> result = [];
             foreach (IUniqueReference uniqueReference in uniqueReferences)
             {
                 if (uniqueReference == null)
@@ -59,13 +59,13 @@ namespace DiGi.Solar.Classes
                     continue;
                 }
 
-                TShadingCalculationResult? shadingCalculationResult = GetValue<TShadingCalculationResult>(uniqueReference as GuidReference);
-                if (shadingCalculationResult == null)
+                TShadingSolverResult? shadingSolverResult = GetValue<TShadingSolverResult>(uniqueReference as GuidReference);
+                if (shadingSolverResult == null)
                 {
                     continue;
                 }
 
-                result.Add(shadingCalculationResult);
+                result.Add(shadingSolverResult);
             }
 
             return result;

@@ -14,36 +14,36 @@ using DiGi.Solar.Interfaces;
 
 namespace DiGi.Solar.ComputeSharp.Classes
 {
-    public class ShadingCalculator : IShadingObject, ICalculator
+    public class ShadingSolver : IShadingObject, ISolver
     {
-        public ShadingCalculator(ShadingModel? shadingModel, ShadingCalculatorOptions? shadingCalculatorOptions)
+        public ShadingSolver(ShadingModel? shadingModel, ShadingSolverOptions? shadingSolverOptions)
         {
             ShadingModel = shadingModel;
-            ShadingCalculatorOptions = shadingCalculatorOptions;
+            ShadingSolverOptions = shadingSolverOptions;
         }
 
-        public ShadingCalculator(ShadingModel? shadingModel, DateTime[]? dateTimes)
+        public ShadingSolver(ShadingModel? shadingModel, DateTime[]? dateTimes)
         {
             ShadingModel = shadingModel;
-            ShadingCalculatorOptions = new ShadingCalculatorOptions();
+            ShadingSolverOptions = new ShadingSolverOptions();
             if(dateTimes != null)
             {
-                ShadingCalculatorOptions.TimeSeries = new DateTimeCollection(dateTimes);
+                ShadingSolverOptions.TimeSeries = new DateTimeCollection(dateTimes);
             }
         }
 
-        public ShadingCalculatorOptions? ShadingCalculatorOptions { get; set; }
+        public ShadingSolverOptions? ShadingSolverOptions { get; set; }
 
         public ShadingModel? ShadingModel { get; set; }
         
-        public bool Calculate()
+        public bool Solve()
         {
-            if (ShadingCalculatorOptions == null || ShadingModel == null)
+            if (ShadingSolverOptions == null || ShadingModel == null)
             {
                 return false;
             }
 
-            DateTime[]? dateTimes = ShadingCalculatorOptions.TimeSeries.GetDateTimes();
+            DateTime[]? dateTimes = ShadingSolverOptions.TimeSeries.GetDateTimes();
             if (dateTimes == null || dateTimes.Length == 0)
             {
                 return true;
@@ -61,7 +61,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 return false;
             }
 
-            double tolerance = ShadingCalculatorOptions.Tolerance;
+            double tolerance = ShadingSolverOptions.Tolerance;
 
             List<Tuple<Triangle3D, int>> tuples = [];
             List<IShadingElement> shadingElements = [];
@@ -168,9 +168,9 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 return result;
             });
 
-            List<List<IShadingCalculationResult>?> shadingCalculationResultsList = [.. Enumerable.Repeat<List<IShadingCalculationResult>?>(null, count_ShadingElement)];
+            List<List<IShadingSolverResult>?> shadingSolverResultsList = [.. Enumerable.Repeat<List<IShadingSolverResult>?>(null, count_ShadingElement)];
 
-            double angleTolerance = ShadingCalculatorOptions.AngleTolerance;
+            double angleTolerance = ShadingSolverOptions.AngleTolerance;
 
             Dictionary<DateTime, Vector3D> dictionary = [];
             foreach (DateTime dateTime in dateTimes)
@@ -258,78 +258,24 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
                     List<IPolygonalFace2D>? polygonalFace2Ds = Geometry.Planar.Create.PolygonalFace2Ds(polygon2Ds, tolerance);
 
-                    if (shadingCalculationResultsList[i] is null)
+                    if (shadingSolverResultsList[i] is null)
                     {
-                        shadingCalculationResultsList[i] = [];
+                        shadingSolverResultsList[i] = [];
                     }
 
                     foreach (DateTime dateTime in tuple_DateTime.Item2)
                     {
-                        if(Create.ShadingCalculationResult(ShadingCalculatorOptions.ShadingCalculationType, dateTime, plane, polygonalFace2Ds) is IShadingCalculationResult shadingCalculationResult)
+                        if(Create.ShadingSolverResult(ShadingSolverOptions.ShadingSolverType, dateTime, plane, polygonalFace2Ds) is IShadingSolverResult shadingSolverResult)
                         {
-                            shadingCalculationResultsList[i]!.Add(shadingCalculationResult);
+                            shadingSolverResultsList[i]!.Add(shadingSolverResult);
                         }
                     }
                 }); 
-
-                //List<Tuple<Triangle3D, int>> tuples_Temp = new List<Tuple<Triangle3D, int>>(tuples);
-
-
-                //for (int i = count_ShadingElement - 1; i >= 0; i--)
-                //{
-                //    IPolygonalFace3D polygonalFace3D = shadingElements[i].PolygonalFace3D;
-
-                //    Geometry.Spatial.Classes.Plane plane = polygonalFace3D?.Plane;
-                //    if (plane == null)
-                //    {
-                //        result.Add(null);
-                //        continue;
-                //    }
-
-                //    List<Triangle3D> triangle3Ds = new List<Triangle3D>();
-
-                //    List<int> indexes = new List<int>();
-                //    int index = tuples_Temp.FindLastIndex(x => x.Item2 == i);
-                //    while (index != -1)
-                //    {
-                //        tuples_Temp.RemoveAt(index);
-                //        List<Triangle3D> triangle3Ds_Temp = triangle3DsList[index];
-
-                //        index = tuples_Temp.FindLastIndex(x => x.Item2 == i);
-
-                //        if (triangle3Ds_Temp == null || triangle3Ds_Temp.Count == 0)
-                //        {
-                //            continue;
-                //        }
-
-                //        triangle3Ds.AddRange(triangle3Ds_Temp);
-                //    }
-
-                //    if (triangle3Ds == null || triangle3Ds.Count == 0)
-                //    {
-                //        result.Add(null);
-                //        continue;
-                //    }
-
-                //    List<Polygon2D> polygon2Ds = triangle3Ds.ConvertAll(x => plane.Convert(x)).Union();
-
-                //    List<IPolygonalFace2D> polygonalFace2Ds = Geometry.Planar.Create.PolygonalFace2Ds(polygon2Ds, tolerance);
-
-                //    if (shadingCalculationResultsList[i] == null)
-                //    {
-                //        shadingCalculationResultsList[i] = new List<IShadingCalculationResult>();
-                //    }
-
-                //    foreach(DateTime dateTime in tuple_DateTime.Item2)
-                //    {
-                //        shadingCalculationResultsList[i].Add(Create.ShadingCalculationResult(ShadingCalculatorOptions.ShadingCalculationType, dateTime, plane, polygonalFace2Ds));
-                //    }
-                //}
             }
 
             for(int i =0; i < count_ShadingElement; i++)
             {
-                ShadingModel.Assign(shadingElements[i], shadingCalculationResultsList[i]);
+                ShadingModel.Assign(shadingElements[i], shadingSolverResultsList[i]);
             }
 
             return true;
