@@ -256,7 +256,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
                     List<Polygon2D>? polygon2Ds = triangle3Ds?.ConvertAll(x => plane.Convert(x)).FilterNulls().Union();
 
-                    List<IPolygonalFace2D>? polygonalFace2Ds = Geometry.Planar.Create.PolygonalFace2Ds(polygon2Ds, tolerance);
+                    List<PolygonalFace2D>? polygonalFace2Ds = Geometry.Planar.Create.PolygonalFace2Ds(polygon2Ds, tolerance);
 
                     if (shadingSolverResultsList[i] is null)
                     {
