@@ -32,9 +32,9 @@ namespace DiGi.Solar.ComputeSharp.Classes
             }
         }
 
-        public ShadingSolverOptions? ShadingSolverOptions { get; set; }
-
         public ShadingModel? ShadingModel { get; set; }
+        
+        public ShadingSolverOptions? ShadingSolverOptions { get; set; }
         
         public bool Solve()
         {

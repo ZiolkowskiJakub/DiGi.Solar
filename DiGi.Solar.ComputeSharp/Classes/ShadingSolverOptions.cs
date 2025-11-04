@@ -9,22 +9,10 @@ namespace DiGi.Solar.ComputeSharp.Classes
 {
     public class ShadingSolverOptions : SerializableObject, IShadingSerializableObject, IOptions
     {
-        [JsonInclude, JsonPropertyName("AngleTolerance")]
-        public double AngleTolerance { get; set; } = Core.Constans.Tolerance.Angle / 2;
-
-        [JsonInclude, JsonPropertyName("ShadingSolverType")]
-        public ShadingSolverType ShadingSolverType { get; set; } = ShadingSolverType.Numerical;
-
-        [JsonInclude, JsonPropertyName("TimeSeries")]
-        public ITimeSeries TimeSeries { get; set; } = new DateTimeSeries(DateTime.Now);
-
-        [JsonInclude, JsonPropertyName("Tolerance")]
-        public double Tolerance { get; set; } = Core.Constans.Tolerance.Distance;
-
         public ShadingSolverOptions(ShadingSolverOptions? shadingSolverOptions)
-            :base(shadingSolverOptions)
+            : base(shadingSolverOptions)
         {
-            if(shadingSolverOptions != null)
+            if (shadingSolverOptions != null)
             {
                 AngleTolerance = shadingSolverOptions.AngleTolerance;
                 ShadingSolverType = shadingSolverOptions.ShadingSolverType;
@@ -39,10 +27,22 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
         }
 
-        public ShadingSolverOptions() 
-            : base() 
-        { 
+        public ShadingSolverOptions()
+            : base()
+        {
 
         }
+
+        [JsonInclude, JsonPropertyName("AngleTolerance")]
+        public double AngleTolerance { get; set; } = Core.Constans.Tolerance.Angle / 2;
+
+        [JsonInclude, JsonPropertyName("ShadingSolverType")]
+        public ShadingSolverType ShadingSolverType { get; set; } = ShadingSolverType.Numerical;
+
+        [JsonInclude, JsonPropertyName("TimeSeries")]
+        public ITimeSeries TimeSeries { get; set; } = new DateTimeSeries(DateTime.Now);
+
+        [JsonInclude, JsonPropertyName("Tolerance")]
+        public double Tolerance { get; set; } = Core.Constans.Tolerance.Distance;
     }
 }

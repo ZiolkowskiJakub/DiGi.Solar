@@ -33,6 +33,9 @@ namespace DiGi.Solar.Classes
         }
 
         [JsonIgnore]
+        public abstract double Area { get; }
+
+        [JsonIgnore]
         public DateTime DateTime
         {
             get 
@@ -40,8 +43,5 @@ namespace DiGi.Solar.Classes
                 return dateTime; 
             }
         }
-
-        [JsonIgnore]
-        public abstract double Area { get; }
     }
 }

@@ -88,6 +88,11 @@ namespace DiGi.Solar.Classes
             return shadingRelationCluster.AddRelation(shadingElement, shadingSolverResults_Temp) != null;
         }
 
+        public List<TShadingElement>? GetShadingElements<TShadingElement>(bool? shadingOnly = null) where TShadingElement : IShadingElement
+        {
+            return shadingRelationCluster.GetValues<TShadingElement>(x => shadingOnly is null || x!.ShadingOnly == shadingOnly.Value)?.CloneAndFilterNulls();
+        }
+
         public List<TShadingSolverResult>? GetShadingSolverResults<TShadingSolverResult>() where TShadingSolverResult : IShadingSolverResult
         {
             return shadingRelationCluster.GetValues<TShadingSolverResult>()?.CloneAndFilterNulls();
@@ -108,12 +113,7 @@ namespace DiGi.Solar.Classes
 
             return shadingRelationCluster.GetShadingSolverResults<TShadingSolverResult>(shadingSolverResultRelation)?.CloneAndFilterNulls();
         }
-
-        public List<TShadingElement>? GetShadingElements<TShadingElement>(bool? shadingOnly = null) where TShadingElement : IShadingElement
-        {
-            return shadingRelationCluster.GetValues<TShadingElement>(x => shadingOnly is null || x!.ShadingOnly == shadingOnly.Value)?.CloneAndFilterNulls();
-        }
-
+        
         public bool TryGetShadingFactor(IShadingElement shadingElement, DateTime dateTime, out double factor, bool interpolation = true)
         {
             factor = double.NaN;
