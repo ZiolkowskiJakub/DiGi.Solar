@@ -41,12 +41,12 @@ namespace DiGi.Solar
                 return null;
             }
 
-            Angle angle_Latitude = new (coordinates.Latitude);
-            Angle angle_Longitude = new (coordinates.Longitude);
+            Angle angle_Latitude = new(coordinates.Latitude);
+            Angle angle_Longitude = new(coordinates.Longitude);
 
             int timeOffset = Convert.ToInt32(Core.Query.TimeOffset(uTC));
 
-            SolarTimes solarTimes = new (dateTime, timeOffset, angle_Latitude, angle_Longitude);
+            SolarTimes solarTimes = new(dateTime, timeOffset, angle_Latitude, angle_Longitude);
             if (!includeNight && (dateTime < solarTimes.Sunrise || dateTime > solarTimes.Sunset))
             {
                 return null;
@@ -57,7 +57,7 @@ namespace DiGi.Solar
 
         public static Vector3D? SunDirection(this ShadingModel? shadingModel, DateTime dateTime, bool includeNight = false)
         {
-            if(shadingModel == null)
+            if (shadingModel == null)
             {
                 return null;
             }

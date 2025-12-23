@@ -17,7 +17,7 @@ namespace DiGi.Solar.Classes
         public NumericalShadingSolverResult(NumericalShadingSolverResult numericalShadingSolverResult)
             : base(numericalShadingSolverResult)
         {
-            if(numericalShadingSolverResult != null)
+            if (numericalShadingSolverResult != null)
             {
                 area = numericalShadingSolverResult.area;
             }
@@ -32,9 +32,9 @@ namespace DiGi.Solar.Classes
         [JsonIgnore]
         public override double Area
         {
-            get 
-            { 
-                return area; 
+            get
+            {
+                return area;
             }
         }
 

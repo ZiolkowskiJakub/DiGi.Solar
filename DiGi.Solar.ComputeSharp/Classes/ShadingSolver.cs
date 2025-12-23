@@ -5,7 +5,6 @@ using DiGi.Core.Classes;
 using DiGi.Core.Interfaces;
 using DiGi.Geometry.Planar;
 using DiGi.Geometry.Planar.Classes;
-using DiGi.Geometry.Planar.Interfaces;
 using DiGi.Geometry.Spatial;
 using DiGi.Geometry.Spatial.Classes;
 using DiGi.Geometry.Spatial.Interfaces;
@@ -26,16 +25,16 @@ namespace DiGi.Solar.ComputeSharp.Classes
         {
             ShadingModel = shadingModel;
             ShadingSolverOptions = new ShadingSolverOptions();
-            if(dateTimes != null)
+            if (dateTimes != null)
             {
                 ShadingSolverOptions.TimeSeries = new DateTimeCollection(dateTimes);
             }
         }
 
         public ShadingModel? ShadingModel { get; set; }
-        
+
         public ShadingSolverOptions? ShadingSolverOptions { get; set; }
-        
+
         public bool Solve()
         {
             if (ShadingSolverOptions == null || ShadingModel == null)
@@ -87,7 +86,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
                 List<IShadingElement> shadingElements_Temp;
                 List<Tuple<Triangle3D, int>> tuples_Temp;
-                if(shadingElement.ShadingOnly)
+                if (shadingElement.ShadingOnly)
                 {
                     shadingElements_Temp = shadingElements_ShadingOnly;
                     tuples_Temp = tuples_ShadingOnly;
@@ -99,7 +98,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 }
 
                 int index = shadingElements_Temp.Count;
-                
+
                 shadingElements_Temp.Add(shadingElement);
 
                 foreach (Triangle3D triangle3D in triangle3Ds)
@@ -111,7 +110,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
             int count_ShadingElement = shadingElements.Count;
             int count_ShadingElement_ShadingOnly = shadingElements_ShadingOnly.Count;
 
-            if(count_ShadingElement == 0)
+            if (count_ShadingElement == 0)
             {
                 return true;
             }
@@ -125,7 +124,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
             ReadOnlyBuffer<Triangle3>? readOnlyBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadOnlyBuffer(tuples_ShadingOnly.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
             ReadWriteBuffer<Triangle3Intersection>? readWriteBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(count_Triangle * count_Triangle_ShadingOnly);
 
-            Func<ReadWriteBuffer<Triangle3Intersection>, int, int, List<List<Triangle3D>>> convert = new((readWriteBuffer_Temp, count_1, count_2) => 
+            Func<ReadWriteBuffer<Triangle3Intersection>, int, int, List<List<Triangle3D>>> convert = new((readWriteBuffer_Temp, count_1, count_2) =>
             {
                 List<Triangle3Intersection>? triangle3Intersections = DiGi.ComputeSharp.Core.Create.List(readWriteBuffer_Temp);
 
@@ -185,7 +184,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
             }
 
             List<Tuple<Vector3D, List<DateTime>>>? tuples_DateTime = Query.GroupDirections(dictionary, angleTolerance);
-            if(tuples_DateTime == null || tuples_DateTime.Count == 0)
+            if (tuples_DateTime == null || tuples_DateTime.Count == 0)
             {
                 return true;
             }
@@ -208,9 +207,9 @@ namespace DiGi.Solar.ComputeSharp.Classes
                     for (int i = 0; i < triangle3DsList_ShadingOnly.Count; i++)
                     {
                         List<Triangle3D> triangle3s = triangle3DsList_ShadingOnly[i];
-                        if(triangle3s != null && triangle3s.Count != 0)
+                        if (triangle3s != null && triangle3s.Count != 0)
                         {
-                            if(triangle3DsList[i] == null)
+                            if (triangle3DsList[i] == null)
                             {
                                 triangle3DsList[i] = [];
                             }
@@ -222,7 +221,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 }
 
                 //for (int i =0; i < count_ShadingElement; i ++)
-                Parallel.For(0, count_ShadingElement, parallelOptions, i => 
+                Parallel.For(0, count_ShadingElement, parallelOptions, i =>
                 {
                     IPolygonalFace3D? polygonalFace3D = shadingElements[i].PolygonalFace3D;
 
@@ -265,15 +264,15 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
                     foreach (DateTime dateTime in tuple_DateTime.Item2)
                     {
-                        if(Create.ShadingSolverResult(ShadingSolverOptions.ShadingSolverType, dateTime, plane, polygonalFace2Ds) is IShadingSolverResult shadingSolverResult)
+                        if (Create.ShadingSolverResult(ShadingSolverOptions.ShadingSolverType, dateTime, plane, polygonalFace2Ds) is IShadingSolverResult shadingSolverResult)
                         {
                             shadingSolverResultsList[i]!.Add(shadingSolverResult);
                         }
                     }
-                }); 
+                });
             }
 
-            for(int i =0; i < count_ShadingElement; i++)
+            for (int i = 0; i < count_ShadingElement; i++)
             {
                 ShadingModel.Assign(shadingElements[i], shadingSolverResultsList[i]);
             }

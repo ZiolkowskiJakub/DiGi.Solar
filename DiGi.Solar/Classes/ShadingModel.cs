@@ -113,7 +113,7 @@ namespace DiGi.Solar.Classes
 
             return shadingRelationCluster.GetShadingSolverResults<TShadingSolverResult>(shadingSolverResultRelation)?.CloneAndFilterNulls();
         }
-        
+
         public bool TryGetShadingFactor(IShadingElement shadingElement, DateTime dateTime, out double factor, bool interpolation = true)
         {
             factor = double.NaN;

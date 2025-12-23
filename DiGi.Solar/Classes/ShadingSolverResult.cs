@@ -20,7 +20,7 @@ namespace DiGi.Solar.Classes
         public ShadingSolverResult(ShadingSolverResult? shadingSolverResult)
             : base(shadingSolverResult)
         {
-            if(shadingSolverResult != null)
+            if (shadingSolverResult != null)
             {
                 dateTime = shadingSolverResult.dateTime;
             }
@@ -38,9 +38,9 @@ namespace DiGi.Solar.Classes
         [JsonIgnore]
         public DateTime DateTime
         {
-            get 
-            { 
-                return dateTime; 
+            get
+            {
+                return dateTime;
             }
         }
     }

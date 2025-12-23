@@ -27,7 +27,7 @@ namespace DiGi.Solar.Classes
         public GeometricalShadingSolverResult(GeometricalShadingSolverResult? geometricalShadingSolverResult)
             : base(geometricalShadingSolverResult)
         {
-            if(geometricalShadingSolverResult != null)
+            if (geometricalShadingSolverResult != null)
             {
                 plane = Core.Query.Clone(geometricalShadingSolverResult.plane);
                 polygonalFace2Ds = Core.Query.CloneAndFilterNulls(geometricalShadingSolverResult.polygonalFace2Ds);
@@ -43,23 +43,23 @@ namespace DiGi.Solar.Classes
         [JsonIgnore]
         public override double Area
         {
-            get 
-            { 
-                if(polygonalFace2Ds == null || polygonalFace2Ds.Count == 0)
+            get
+            {
+                if (polygonalFace2Ds == null || polygonalFace2Ds.Count == 0)
                 {
                     return 0;
                 }
 
                 double result = 0;
-                foreach(IPolygonalFace2D polygonalFace2D in polygonalFace2Ds)
+                foreach (IPolygonalFace2D polygonalFace2D in polygonalFace2Ds)
                 {
-                    if(polygonalFace2D == null)
+                    if (polygonalFace2D == null)
                     {
                         continue;
                     }
 
                     double area_Temp = polygonalFace2D.GetArea();
-                    if(double.IsNaN(area_Temp))
+                    if (double.IsNaN(area_Temp))
                     {
                         continue;
                     }
@@ -68,7 +68,7 @@ namespace DiGi.Solar.Classes
 
                 }
 
-                return result; 
+                return result;
             }
         }
 
@@ -92,7 +92,7 @@ namespace DiGi.Solar.Classes
 
         public List<IPolygonalFace3D>? GetPolygonalFace3Ds()
         {
-            if(plane == null || polygonalFace2Ds == null)
+            if (plane == null || polygonalFace2Ds == null)
             {
                 return null;
             }
