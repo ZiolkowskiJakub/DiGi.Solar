@@ -26,7 +26,6 @@ namespace DiGi.Solar.Classes
         public NumericalShadingSolverResult(JsonObject? jsonObject)
             : base(jsonObject)
         {
-
         }
 
         [JsonIgnore]
@@ -37,6 +36,5 @@ namespace DiGi.Solar.Classes
                 return area;
             }
         }
-
     }
 }

@@ -25,7 +25,6 @@ namespace DiGi.Solar.ComputeSharp
 
                     return new GeometricalShadingSolverResult(dateTime, plane, polygonalFace2Ds);
 
-
                 case ShadingSolverType.Numerical:
                     double area = 0;
                     if (polygonalFace2Ds != null)

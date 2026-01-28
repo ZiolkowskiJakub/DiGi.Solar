@@ -55,7 +55,6 @@ namespace DiGi.Solar.Classes
         public ShadingElement(JsonObject? jsonObject)
             : base(jsonObject)
         {
-
         }
 
         [JsonIgnore]
@@ -64,7 +63,6 @@ namespace DiGi.Solar.Classes
             get
             {
                 return Core.Query.Clone(polygonalFace3D);
-
             }
         }
 
@@ -83,7 +81,6 @@ namespace DiGi.Solar.Classes
             get
             {
                 return shadingOnly;
-
             }
         }
     }

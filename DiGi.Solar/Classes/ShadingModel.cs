@@ -43,7 +43,6 @@ namespace DiGi.Solar.Classes
         public ShadingModel(JsonObject jsonObject)
             : base(jsonObject)
         {
-
         }
 
         [JsonIgnore]

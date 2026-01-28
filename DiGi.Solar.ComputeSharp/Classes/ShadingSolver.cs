@@ -217,7 +217,6 @@ namespace DiGi.Solar.ComputeSharp.Classes
                             triangle3DsList[i].AddRange(triangle3s);
                         }
                     }
-
                 }
 
                 //for (int i =0; i < count_ShadingElement; i ++)

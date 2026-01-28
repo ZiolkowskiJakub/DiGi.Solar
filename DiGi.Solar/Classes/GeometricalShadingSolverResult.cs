@@ -37,7 +37,6 @@ namespace DiGi.Solar.Classes
         public GeometricalShadingSolverResult(JsonObject? jsonObject)
             : base(jsonObject)
         {
-
         }
 
         [JsonIgnore]
@@ -65,7 +64,6 @@ namespace DiGi.Solar.Classes
                     }
 
                     result += area_Temp;
-
                 }
 
                 return result;
@@ -99,6 +97,5 @@ namespace DiGi.Solar.Classes
 
             return polygonalFace2Ds.ConvertAll(plane.Convert)?.FilterNulls();
         }
-
     }
 }

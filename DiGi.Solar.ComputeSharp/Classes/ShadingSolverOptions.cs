@@ -24,13 +24,11 @@ namespace DiGi.Solar.ComputeSharp.Classes
         public ShadingSolverOptions(JsonObject? jsonObject)
             : base(jsonObject)
         {
-
         }
 
         public ShadingSolverOptions()
             : base()
         {
-
         }
 
         [JsonInclude, JsonPropertyName("AngleTolerance")]

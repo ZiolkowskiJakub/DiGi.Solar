@@ -12,19 +12,16 @@ namespace DiGi.Solar.Classes
         public ShadingRelationCluster()
             : base()
         {
-
         }
 
         public ShadingRelationCluster(JsonObject? jsonObject)
             : base(jsonObject)
         {
-
         }
 
         public ShadingRelationCluster(ShadingRelationCluster? shadingRelationCluster)
             : base(shadingRelationCluster)
         {
-
         }
 
         public ShadingSolverResultRelation? AddRelation(IShadingElement? shadingElement, IEnumerable<IShadingSolverResult>? shadingSolverResults)

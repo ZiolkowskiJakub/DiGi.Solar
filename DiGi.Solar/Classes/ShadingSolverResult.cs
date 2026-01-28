@@ -29,7 +29,6 @@ namespace DiGi.Solar.Classes
         public ShadingSolverResult(JsonObject? jsonObject)
             : base(jsonObject)
         {
-
         }
 
         [JsonIgnore]
