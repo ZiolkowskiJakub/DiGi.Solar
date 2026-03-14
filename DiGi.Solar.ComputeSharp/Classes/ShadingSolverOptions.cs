@@ -32,7 +32,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
         }
 
         [JsonInclude, JsonPropertyName("AngleTolerance")]
-        public double AngleTolerance { get; set; } = Core.Constants.Tolerance.Angle / 2;
+        public double AngleTolerance { get; set; } = Core.Constans.Tolerance.Angle / 2;
 
         [JsonInclude, JsonPropertyName("ShadingSolverType")]
         public ShadingSolverType ShadingSolverType { get; set; } = ShadingSolverType.Numerical;
@@ -41,6 +41,6 @@ namespace DiGi.Solar.ComputeSharp.Classes
         public ITimeSeries TimeSeries { get; set; } = new DateTimeSeries(DateTime.Now);
 
         [JsonInclude, JsonPropertyName("Tolerance")]
-        public double Tolerance { get; set; } = Core.Constants.Tolerance.Distance;
+        public double Tolerance { get; set; } = Core.Constans.Tolerance.Distance;
     }
 }
