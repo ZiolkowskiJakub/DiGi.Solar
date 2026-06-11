@@ -1,4 +1,4 @@
-﻿using ComputeSharp;
+using ComputeSharp;
 using DiGi.ComputeSharp.Spatial.Classes;
 using DiGi.Core;
 using DiGi.Core.Classes;
@@ -13,14 +13,27 @@ using DiGi.Solar.Interfaces;
 
 namespace DiGi.Solar.ComputeSharp.Classes
 {
+    /// <summary>
+    /// Provides a solver implementation to calculate shading effects on objects using ComputeSharp for GPU acceleration.
+    /// </summary>
     public class ShadingSolver : IShadingObject, ISolver
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ShadingSolver"/> class with the specified shading model and options.
+        /// </summary>
+        /// <param name="shadingModel">The shading model to be used for calculations.</param>
+        /// <param name="shadingSolverOptions">The options that configure the solver's behavior.</param>
         public ShadingSolver(ShadingModel? shadingModel, ShadingSolverOptions? shadingSolverOptions)
         {
             ShadingModel = shadingModel;
             ShadingSolverOptions = shadingSolverOptions;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ShadingSolver"/> class with the specified shading model and a collection of date-times.
+        /// </summary>
+        /// <param name="shadingModel">The shading model to be used for calculations.</param>
+        /// <param name="dateTimes">An array of date-time values for which shading should be calculated.</param>
         public ShadingSolver(ShadingModel? shadingModel, DateTime[]? dateTimes)
         {
             ShadingModel = shadingModel;
@@ -31,10 +44,20 @@ namespace DiGi.Solar.ComputeSharp.Classes
             }
         }
 
+        /// <summary>
+        /// Gets or sets the <see cref="ShadingModel"/> associated with this solver.
+        /// </summary>
         public ShadingModel? ShadingModel { get; set; }
 
+        /// <summary>
+        /// Gets or sets the <see cref="ShadingSolverOptions"/> that define the parameters for the solving process.
+        /// </summary>
         public ShadingSolverOptions? ShadingSolverOptions { get; set; }
 
+        /// <summary>
+        /// Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects.
+        /// </summary>
+        /// <returns>True if the solving operation completed successfully; otherwise, false.</returns>
         public bool Solve()
         {
             if (ShadingSolverOptions == null || ShadingModel == null)

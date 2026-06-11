@@ -1,4 +1,4 @@
-﻿using DiGi.Geometry.Spatial.Classes;
+using DiGi.Geometry.Spatial.Classes;
 using System;
 using System.Collections.Generic;
 
@@ -6,6 +6,12 @@ namespace DiGi.Solar
 {
     public static partial class Query
     {
+        /// <summary>
+        /// Groups directions from a dictionary of dates and vectors based on a specified angle tolerance.
+        /// </summary>
+        /// <param name="dictionary">The dictionary containing date-time keys and their corresponding 3D direction vectors.</param>
+        /// <param name="angleTolerance">The maximum angle difference allowed to group two directions together.</param>
+        /// <returns>A list of tuples, where each tuple contains a representative <see cref="T:DiGi.Geometry.Spatial.Classes.Vector3D" /> and a list of <see cref="T:System.DateTime" /> values associated with that direction; returns <see langword="null" /> if the input dictionary is null.</returns>
         public static List<Tuple<Vector3D, List<DateTime>>>? GroupDirections(this Dictionary<DateTime, Vector3D>? dictionary, double angleTolerance)
         {
             if (dictionary == null)

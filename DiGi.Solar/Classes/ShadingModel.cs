@@ -1,4 +1,4 @@
-﻿using DiGi.Core;
+using DiGi.Core;
 using DiGi.Core.Classes;
 using DiGi.Core.Interfaces;
 using DiGi.Geometry.Spatial.Interfaces;
@@ -11,6 +11,9 @@ using System.Text.Json.Serialization;
 
 namespace DiGi.Solar.Classes
 {
+    /// <summary>
+    /// Represents a shading model that manages the relationship between shading elements and their corresponding solver results.
+    /// </summary>
     public class ShadingModel : GuidObject, ISolarObject, IGuidModel
     {
         [JsonInclude, JsonPropertyName("Coordinates")]
@@ -22,6 +25,11 @@ namespace DiGi.Solar.Classes
         [JsonInclude, JsonPropertyName("UTC")]
         private readonly Core.Enums.UTC uTC;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ShadingModel"/> class with the specified UTC offset and coordinates.
+        /// </summary>
+        /// <param name="uTC">The UTC time zone offset.</param>
+        /// <param name="coordinates">The geographic coordinates associated with the model.</param>
         public ShadingModel(Core.Enums.UTC uTC, Coordinates? coordinates)
             : base()
         {
@@ -29,6 +37,10 @@ namespace DiGi.Solar.Classes
             this.coordinates = Core.Query.Clone(coordinates);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ShadingModel"/> class by cloning an existing shading model.
+        /// </summary>
+        /// <param name="shadingModel">The source shading model to clone.</param>
         public ShadingModel(ShadingModel shadingModel)
             : base(shadingModel)
         {
@@ -40,11 +52,18 @@ namespace DiGi.Solar.Classes
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ShadingModel"/> class from a JSON object.
+        /// </summary>
+        /// <param name="jsonObject">The JSON object containing the model data.</param>
         public ShadingModel(JsonObject jsonObject)
             : base(jsonObject)
         {
         }
 
+        /// <summary>
+        /// Gets the geographic coordinates associated with the shading model.
+        /// </summary>
         [JsonIgnore]
         public Coordinates? Coordinates
         {
@@ -54,6 +73,9 @@ namespace DiGi.Solar.Classes
             }
         }
 
+        /// <summary>
+        /// Gets the UTC time zone offset for the shading model.
+        /// </summary>
         [JsonIgnore]
         public Core.Enums.UTC UTC
         {
@@ -63,6 +85,12 @@ namespace DiGi.Solar.Classes
             }
         }
 
+        /// <summary>
+        /// Assigns a shading element and its corresponding solver results to the model's relation cluster.
+        /// </summary>
+        /// <param name="shadingElement">The shading element to assign.</param>
+        /// <param name="shadingSolverResults">A collection of solver results associated with the element.</param>
+        /// <returns>True if the assignment was successful; otherwise, false.</returns>
         public bool Assign(IShadingElement? shadingElement, IEnumerable<IShadingSolverResult>? shadingSolverResults)
         {
             if (shadingElement == null || shadingSolverResults == null)
@@ -87,16 +115,33 @@ namespace DiGi.Solar.Classes
             return shadingRelationCluster.AddRelation(shadingElement, shadingSolverResults_Temp) != null;
         }
 
+        /// <summary>
+        /// Retrieves a list of shading elements of the specified type, optionally filtered by their shading-only status.
+        /// </summary>
+        /// <typeparam name="TShadingElement">The type of shading element to retrieve.</typeparam>
+        /// <param name="shadingOnly">Optional filter to include only elements that are marked as shading only.</param>
+        /// <returns>A list of matching shading elements, or null if none were found.</returns>
         public List<TShadingElement>? GetShadingElements<TShadingElement>(bool? shadingOnly = null) where TShadingElement : IShadingElement
         {
             return shadingRelationCluster.GetValues<TShadingElement>(x => shadingOnly is null || x!.ShadingOnly == shadingOnly.Value)?.CloneAndFilterNulls();
         }
 
+        /// <summary>
+        /// Retrieves all shading solver results of the specified type.
+        /// </summary>
+        /// <typeparam name="TShadingSolverResult">The type of solver result to retrieve.</typeparam>
+        /// <returns>A list of matching solver results, or null if none were found.</returns>
         public List<TShadingSolverResult>? GetShadingSolverResults<TShadingSolverResult>() where TShadingSolverResult : IShadingSolverResult
         {
             return shadingRelationCluster.GetValues<TShadingSolverResult>()?.CloneAndFilterNulls();
         }
 
+        /// <summary>
+        /// Retrieves shading solver results of the specified type for a specific shading element.
+        /// </summary>
+        /// <typeparam name="TShadingSolverResult">The type of solver result to retrieve.</typeparam>
+        /// <param name="shadingElement">The shading element associated with the results.</param>
+        /// <returns>A list of matching solver results, or null if the element is null or no results were found.</returns>
         public List<TShadingSolverResult>? GetShadingSolverResults<TShadingSolverResult>(IShadingElement? shadingElement) where TShadingSolverResult : IShadingSolverResult
         {
             if (shadingElement == null)
@@ -113,6 +158,14 @@ namespace DiGi.Solar.Classes
             return shadingRelationCluster.GetShadingSolverResults<TShadingSolverResult>(shadingSolverResultRelation)?.CloneAndFilterNulls();
         }
 
+        /// <summary>
+        /// Attempts to calculate the shading factor for a specific element at a given date and time.
+        /// </summary>
+        /// <param name="shadingElement">The shading element to evaluate.</param>
+        /// <param name="dateTime">The date and time of evaluation.</param>
+        /// <param name="factor">When this method returns, contains the calculated shading factor if successful; otherwise, <see cref="System.Double.NaN"/>.</param>
+        /// <param name="interpolation">Whether to interpolate between known results if an exact match for the date and time is not found.</param>
+        /// <returns>True if a shading factor was successfully determined; otherwise, false.</returns>
         public bool TryGetShadingFactor(IShadingElement shadingElement, DateTime dateTime, out double factor, bool interpolation = true)
         {
             factor = double.NaN;
@@ -211,6 +264,11 @@ namespace DiGi.Solar.Classes
             return false;
         }
 
+        /// <summary>
+        /// Updates or adds a shading element to the model's relation cluster.
+        /// </summary>
+        /// <param name="shadingElement">The shading element to update.</param>
+        /// <returns>True if the element was successfully added or updated; otherwise, false.</returns>
         public bool Update(IShadingElement shadingElement)
         {
             if (shadingElement == null)
@@ -221,6 +279,11 @@ namespace DiGi.Solar.Classes
             return shadingRelationCluster.Add(Core.Query.Clone(shadingElement));
         }
 
+        /// <summary>
+        /// Updates or adds a shading solver result to the model's relation cluster.
+        /// </summary>
+        /// <param name="shadingSolverResult">The shading solver result to update.</param>
+        /// <returns>True if the solver result was successfully added or updated; otherwise, false.</returns>
         public bool Update(IShadingSolverResult shadingSolverResult)
         {
             if (shadingSolverResult == null)
