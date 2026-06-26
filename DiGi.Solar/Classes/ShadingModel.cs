@@ -123,7 +123,7 @@ namespace DiGi.Solar.Classes
         /// <returns>A list of matching shading elements, or null if none were found.</returns>
         public List<TShadingElement>? GetShadingElements<TShadingElement>(bool? shadingOnly = null) where TShadingElement : IShadingElement
         {
-            return shadingRelationCluster.GetValues<TShadingElement>(x => shadingOnly is null || x!.ShadingOnly == shadingOnly.Value)?.CloneAndFilterNulls();
+            return shadingRelationCluster.GetValues<TShadingElement>(x => shadingOnly is null || x?.ShadingOnly == shadingOnly.Value)?.CloneAndFilterNulls();
         }
 
         /// <summary>
@@ -208,14 +208,14 @@ namespace DiGi.Solar.Classes
             List<Tuple<long, IShadingSolverResult>> tuples = [];
             foreach (IShadingSolverResult shadingSolverResult in shadingSolverResults)
             {
+                double area_Temp = shadingSolverResult.Area;
+                if (double.IsNaN(area_Temp))
+                {
+                    continue;
+                }
+
                 if (shadingSolverResult.DateTime.Equals(dateTime))
                 {
-                    double area_Temp = shadingSolverResult.Area;
-                    if (double.IsNaN(area_Temp))
-                    {
-                        continue;
-                    }
-
                     factor = area_Temp / area;
                     return true;
                 }
@@ -249,14 +249,21 @@ namespace DiGi.Solar.Classes
 
             for (int i = 0; i < tuples.Count - 1; i++)
             {
-                if (ticks > tuples[i].Item1)
+                if (ticks >= tuples[i].Item1 && ticks <= tuples[i + 1].Item1)
                 {
-                    double ticks_Start = System.Convert.ToDouble(tuples[i - 1].Item1);
-                    double area_Start = tuples[i - 1].Item2.Area;
-                    double ticks_End = System.Convert.ToDouble(tuples[i - 1].Item1);
-                    double area_End = tuples[i].Item2.Area;
+                    double ticks_Start = System.Convert.ToDouble(tuples[i].Item1);
+                    double area_Start = tuples[i].Item2.Area;
+                    double ticks_End = System.Convert.ToDouble(tuples[i + 1].Item1);
+                    double area_End = tuples[i + 1].Item2.Area;
 
-                    factor = area_Start + (area_Start - area_End) / (ticks_Start - ticks_End) * (System.Convert.ToDouble(ticks) - ticks_Start);
+                    if (ticks_Start.Equals(ticks_End))
+                    {
+                        factor = area_Start / area;
+                        return true;
+                    }
+
+                    double area_Interpolated = area_Start + (area_End - area_Start) / (ticks_End - ticks_Start) * (System.Convert.ToDouble(ticks) - ticks_Start);
+                    factor = area_Interpolated / area;
                     return true;
                 }
             }

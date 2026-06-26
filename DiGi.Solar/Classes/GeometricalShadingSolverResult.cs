@@ -125,7 +125,7 @@ namespace DiGi.Solar.Classes
                 return null;
             }
 
-            return polygonalFace2Ds.ConvertAll(plane.Convert)?.FilterNulls();
+            return polygonalFace2Ds.FilterNulls()?.ConvertAll(plane.Convert)?.FilterNulls();
         }
     }
 }

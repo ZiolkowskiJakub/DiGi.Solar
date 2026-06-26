@@ -22,6 +22,11 @@ namespace DiGi.Solar
             List<Tuple<Vector3D, List<DateTime>>> result = [];
             foreach (KeyValuePair<DateTime, Vector3D> keyValuePair in dictionary)
             {
+                if (keyValuePair.Value is null)
+                {
+                    continue;
+                }
+
                 int index = result.FindIndex(x => x.Item1.Angle(keyValuePair.Value) < angleTolerance);
                 if (index == -1)
                 {
@@ -30,7 +35,8 @@ namespace DiGi.Solar
                 }
                 else
                 {
-                    Vector3D? vector3D = (result[index].Item1 + keyValuePair.Value) / 2;
+                    int count = result[index].Item2.Count;
+                    Vector3D? vector3D = ((result[index].Item1 * count) + keyValuePair.Value) / (count + 1);
                     if (vector3D is not null)
                     {
                         result[index] = new Tuple<Vector3D, List<DateTime>>(vector3D, result[index].Item2);

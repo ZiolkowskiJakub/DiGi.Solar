@@ -141,11 +141,11 @@ namespace DiGi.Solar.ComputeSharp.Classes
             int count_Triangle = tuples.Count;
             int count_Triangle_ShadingOnly = tuples_ShadingOnly.Count;
 
-            ReadOnlyBuffer<Triangle3> readOnlyBuffer = graphicDevice.AllocateReadOnlyBuffer(tuples.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
-            ReadWriteBuffer<Triangle3Intersection> readWriteBuffer = graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(count_Triangle * count_Triangle);
+            using ReadOnlyBuffer<Triangle3> readOnlyBuffer = graphicDevice.AllocateReadOnlyBuffer(tuples.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
+            using ReadWriteBuffer<Triangle3Intersection> readWriteBuffer = graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(count_Triangle * count_Triangle);
 
-            ReadOnlyBuffer<Triangle3>? readOnlyBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadOnlyBuffer(tuples_ShadingOnly.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
-            ReadWriteBuffer<Triangle3Intersection>? readWriteBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(count_Triangle * count_Triangle_ShadingOnly);
+            using ReadOnlyBuffer<Triangle3>? readOnlyBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadOnlyBuffer(tuples_ShadingOnly.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
+            using ReadWriteBuffer<Triangle3Intersection>? readWriteBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(count_Triangle * count_Triangle_ShadingOnly);
 
             Func<ReadWriteBuffer<Triangle3Intersection>, int, int, List<List<Triangle3D>>> convert = new((readWriteBuffer_Temp, count_1, count_2) =>
             {
@@ -224,9 +224,9 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
                 if (readOnlyBuffer_ShadingOnly != null && readWriteBuffer_ShadingOnly != null)
                 {
-                    graphicDevice.For(count_Triangle, count_Triangle_ShadingOnly, new Triangle3ExternalShadingComputeShader(readOnlyBuffer, readOnlyBuffer_ShadingOnly, readWriteBuffer, coordinate3, tolerance));
+                    graphicDevice.For(count_Triangle, count_Triangle_ShadingOnly, new Triangle3ExternalShadingComputeShader(readOnlyBuffer, readOnlyBuffer_ShadingOnly, readWriteBuffer_ShadingOnly, coordinate3, tolerance));
 
-                    List<List<Triangle3D>> triangle3DsList_ShadingOnly = convert(readWriteBuffer, count_Triangle, count_Triangle_ShadingOnly);
+                    List<List<Triangle3D>> triangle3DsList_ShadingOnly = convert(readWriteBuffer_ShadingOnly, count_Triangle, count_Triangle_ShadingOnly);
                     for (int i = 0; i < triangle3DsList_ShadingOnly.Count; i++)
                     {
                         List<Triangle3D> triangle3s = triangle3DsList_ShadingOnly[i];
