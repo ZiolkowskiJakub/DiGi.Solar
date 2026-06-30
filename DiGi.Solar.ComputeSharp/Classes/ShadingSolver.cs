@@ -5,6 +5,7 @@ using DiGi.Core.Classes;
 using DiGi.Core.Interfaces;
 using DiGi.Geometry.Planar;
 using DiGi.Geometry.Planar.Classes;
+using DiGi.Geometry.Planar.Interfaces;
 using DiGi.Geometry.Spatial;
 using DiGi.Geometry.Spatial.Classes;
 using DiGi.Geometry.Spatial.Interfaces;
@@ -88,6 +89,11 @@ namespace DiGi.Solar.ComputeSharp.Classes
             List<Tuple<Triangle3D, int>> tuples = [];
             List<IShadingElement> shadingElements = [];
 
+            // Captured in lockstep with shadingElements (non-shading-only) during triangulation
+            // below, so the per-element plane is read from the same clone used to triangulate
+            // rather than deep-cloning each PolygonalFace3D a second time later.
+            List<Geometry.Spatial.Classes.Plane?> planes_ShadingElements = [];
+
             List<Tuple<Triangle3D, int>> tuples_ShadingOnly = [];
             List<IShadingElement> shadingElements_ShadingOnly = [];
 
@@ -101,7 +107,9 @@ namespace DiGi.Solar.ComputeSharp.Classes
                     continue;
                 }
 
-                List<Triangle3D>? triangle3Ds = shadingElement.PolygonalFace3D?.Triangulate(tolerance);
+                IPolygonalFace3D? polygonalFace3D = shadingElement.PolygonalFace3D;
+
+                List<Triangle3D>? triangle3Ds = polygonalFace3D?.Triangulate(tolerance);
                 if (triangle3Ds == null || triangle3Ds.Count == 0)
                 {
                     continue;
@@ -118,6 +126,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 {
                     shadingElements_Temp = shadingElements;
                     tuples_Temp = tuples;
+                    planes_ShadingElements.Add(polygonalFace3D?.Plane);
                 }
 
                 int index = shadingElements_Temp.Count;
@@ -147,23 +156,28 @@ namespace DiGi.Solar.ComputeSharp.Classes
             using ReadOnlyBuffer<Triangle3>? readOnlyBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadOnlyBuffer(tuples_ShadingOnly.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
             using ReadWriteBuffer<Triangle3Intersection>? readWriteBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(count_Triangle * count_Triangle_ShadingOnly);
 
-            Func<ReadWriteBuffer<Triangle3Intersection>, int, int, List<List<Triangle3D>>> convert = new((readWriteBuffer_Temp, count_1, count_2) =>
+            // Reusable CPU-side readback buffers. The GPU buffer sizes are constant across all
+            // directions, so allocate the managed arrays once and copy straight into them each
+            // direction instead of allocating a new array plus rebuilding a List on every call
+            // (the previous Create.List did both, per direction).
+            Triangle3Intersection[] triangle3Intersections_Readback = new Triangle3Intersection[count_Triangle * count_Triangle];
+            Triangle3Intersection[]? triangle3Intersections_Readback_ShadingOnly = count_Triangle_ShadingOnly == 0 ? null : new Triangle3Intersection[count_Triangle * count_Triangle_ShadingOnly];
+
+            Func<ReadWriteBuffer<Triangle3Intersection>, Triangle3Intersection[], int, int, List<List<Triangle3D>>> convert = new((readWriteBuffer_Temp, triangle3Intersections, count_1, count_2) =>
             {
-                List<Triangle3Intersection>? triangle3Intersections = DiGi.ComputeSharp.Core.Create.List(readWriteBuffer_Temp);
+                readWriteBuffer_Temp.CopyTo(triangle3Intersections);
 
                 List<List<Triangle3D>> result = [];
-
-                if (triangle3Intersections is null)
-                {
-                    return result;
-                }
 
                 for (int i = 0; i < count_1; i++)
                 {
                     List<Triangle3D> triangle3Ds = [];
                     for (int j = 0; j < count_2; j++)
                     {
-                        Triangle3Intersection triangle3Intersection = triangle3Intersections[i * count_1 + j];
+                        // Reference the buffer element in place; Triangle3Intersection is a large
+                        // (6 x Coordinate3) struct and IsNaN() only reads Point_1, so copying the
+                        // whole struct per cell (most of which are NaN) would be pure overhead.
+                        ref Triangle3Intersection triangle3Intersection = ref triangle3Intersections[(i * count_2) + j];
                         if (triangle3Intersection.IsNaN())
                         {
                             continue;
@@ -212,6 +226,21 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 return true;
             }
 
+            // Pre-compute the per-element triangle-index map once, outside the direction loop;
+            // it avoids scanning every triangle for every element on every direction (the
+            // triangle-to-element mapping never changes between directions). The element planes
+            // were already captured during triangulation in planes_ShadingElements.
+            List<int>[] triangleIndices_ByElement = new List<int>[count_ShadingElement];
+            for (int i = 0; i < count_ShadingElement; i++)
+            {
+                triangleIndices_ByElement[i] = [];
+            }
+
+            for (int i = 0; i < count_Triangle; i++)
+            {
+                triangleIndices_ByElement[tuples[i].Item2].Add(i);
+            }
+
             ParallelOptions parallelOptions = Core.Create.ParallelOptions();
 
             foreach (Tuple<Vector3D, List<DateTime>> tuple_DateTime in tuples_DateTime)
@@ -220,13 +249,13 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
                 graphicDevice.For(count_Triangle, count_Triangle, new Triangle3ShadingComputeShader(readOnlyBuffer, readWriteBuffer, coordinate3, tolerance));
 
-                List<List<Triangle3D>> triangle3DsList = convert(readWriteBuffer, count_Triangle, count_Triangle);
+                List<List<Triangle3D>> triangle3DsList = convert(readWriteBuffer, triangle3Intersections_Readback, count_Triangle, count_Triangle);
 
                 if (readOnlyBuffer_ShadingOnly != null && readWriteBuffer_ShadingOnly != null)
                 {
                     graphicDevice.For(count_Triangle, count_Triangle_ShadingOnly, new Triangle3ExternalShadingComputeShader(readOnlyBuffer, readOnlyBuffer_ShadingOnly, readWriteBuffer_ShadingOnly, coordinate3, tolerance));
 
-                    List<List<Triangle3D>> triangle3DsList_ShadingOnly = convert(readWriteBuffer_ShadingOnly, count_Triangle, count_Triangle_ShadingOnly);
+                    List<List<Triangle3D>> triangle3DsList_ShadingOnly = convert(readWriteBuffer_ShadingOnly, triangle3Intersections_Readback_ShadingOnly!, count_Triangle, count_Triangle_ShadingOnly);
                     for (int i = 0; i < triangle3DsList_ShadingOnly.Count; i++)
                     {
                         List<Triangle3D> triangle3s = triangle3DsList_ShadingOnly[i];
@@ -242,25 +271,17 @@ namespace DiGi.Solar.ComputeSharp.Classes
                     }
                 }
 
-                //for (int i =0; i < count_ShadingElement; i ++)
                 Parallel.For(0, count_ShadingElement, parallelOptions, i =>
                 {
-                    IPolygonalFace3D? polygonalFace3D = shadingElements[i].PolygonalFace3D;
-
-                    Geometry.Spatial.Classes.Plane? plane = polygonalFace3D?.Plane;
+                    Geometry.Spatial.Classes.Plane? plane = planes_ShadingElements[i];
                     if (plane == null)
                     {
                         return;
                     }
 
                     List<Triangle3D> triangle3Ds = [];
-                    for (int j = 0; j < tuples.Count; j++)
+                    foreach (int j in triangleIndices_ByElement[i])
                     {
-                        if (tuples[j].Item2 != i)
-                        {
-                            continue;
-                        }
-
                         List<Triangle3D> triangle3Ds_Temp = triangle3DsList[j];
                         if (triangle3Ds_Temp == null || triangle3Ds_Temp.Count == 0)
                         {
@@ -270,14 +291,30 @@ namespace DiGi.Solar.ComputeSharp.Classes
                         triangle3Ds.AddRange(triangle3Ds_Temp);
                     }
 
-                    if (triangle3Ds == null || triangle3Ds.Count == 0)
+                    if (triangle3Ds.Count == 0)
                     {
                         return;
                     }
 
-                    List<Polygon2D>? polygon2Ds = triangle3Ds?.ConvertAll(x => plane.Convert(x)).FilterNulls().Union();
+                    List<IPolygonalFace2D> polygonalFace2Ds_Shadow = [];
+                    foreach (Triangle3D triangle3D in triangle3Ds)
+                    {
+                        if (plane.Convert(triangle3D) is not Triangle2D triangle2D)
+                        {
+                            continue;
+                        }
 
-                    List<PolygonalFace2D>? polygonalFace2Ds = Geometry.Planar.Create.PolygonalFace2Ds(polygon2Ds, tolerance);
+                        if (Geometry.Planar.Create.PolygonalFace2D(triangle2D) is IPolygonalFace2D polygonalFace2D_Shadow)
+                        {
+                            polygonalFace2Ds_Shadow.Add(polygonalFace2D_Shadow);
+                        }
+                    }
+
+                    // Single hole-preserving union: produces PolygonalFace2D faces directly in one
+                    // NTS pass, replacing the previous Union (Polygon2D) + Create.PolygonalFace2Ds
+                    // re-polygonization. Unlike the Polygon2D union it keeps interior voids, so
+                    // ring-shaped shadows no longer over-count the shaded area.
+                    List<PolygonalFace2D>? polygonalFace2Ds = polygonalFace2Ds_Shadow.Union();
 
                     if (shadingSolverResultsList[i] is null)
                     {
