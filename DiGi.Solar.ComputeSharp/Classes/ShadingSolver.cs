@@ -1,6 +1,5 @@
 using ComputeSharp;
 using DiGi.ComputeSharp.Spatial.Classes;
-using DiGi.Core;
 using DiGi.Core.Classes;
 using DiGi.Core.Interfaces;
 using DiGi.Geometry.Planar;
