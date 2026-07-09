@@ -1,4 +1,4 @@
-#### [DiGi\.Solar](index.md 'index')
+#### [DiGi\.Solar](DiGi.Solar.Overview.md 'DiGi\.Solar\.Overview')
 
 ## DiGi\.Solar\.Enums Namespace
 ### Enums

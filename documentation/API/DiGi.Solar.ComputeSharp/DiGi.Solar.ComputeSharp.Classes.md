@@ -1,4 +1,4 @@
-#### [DiGi\.Solar\.ComputeSharp](index.md 'index')
+#### [DiGi\.Solar\.ComputeSharp](DiGi.Solar.ComputeSharp.Overview.md 'DiGi\.Solar\.ComputeSharp\.Overview')
 
 ## DiGi\.Solar\.ComputeSharp\.Classes Namespace
 ### Classes
