@@ -149,7 +149,7 @@ namespace DiGi.Solar.Classes
                 return null;
             }
 
-            ShadingSolverResultRelation? shadingSolverResultRelation = shadingRelationCluster.GetRelation<ShadingSolverResultRelation>(Core.Create.UniqueReference(shadingElement));
+            ShadingSolverResultRelation? shadingSolverResultRelation = shadingRelationCluster.GetRelation<ShadingSolverResultRelation>(Create.UniqueReference(shadingElement));
             if (shadingSolverResultRelation == null)
             {
                 return null;
