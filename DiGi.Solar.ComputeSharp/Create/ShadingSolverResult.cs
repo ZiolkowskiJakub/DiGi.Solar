@@ -12,9 +12,9 @@ namespace DiGi.Solar.ComputeSharp
         /// Creates an <see cref="IShadingSolverResult" /> based on the specified <see cref="ShadingSolverType" />, date and time, plane, and polygonal faces.
         /// </summary>
         /// <param name="shadingSolverType">The <see cref="ShadingSolverType" /> that determines the type of shading solver result to be created.</param>
-        /// <param name="dateTime">The <see cref="System.DateTime" /> representing the time for which the shading is solved.</param>
+        /// <param name="dateTime">The <see cref="DateTime" /> representing the time for which the shading is solved.</param>
         /// <param name="plane">The <see cref="T:DiGi.Geometry.Spatial.Classes.Plane" /> used for geometrical shading calculations. This can be null if a numerical solver is used.</param>
-        /// <param name="polygonalFace2Ds">An <see cref="System.Collections.Generic.IEnumerable{IPolygonalFace2D}" /> representing the faces involved in shading calculations.</param>
+        /// <param name="polygonalFace2Ds">An <see cref="IEnumerable{IPolygonalFace2D}" /> representing the faces involved in shading calculations.</param>
         /// <returns>An implementation of <see cref="IShadingSolverResult" /> if a valid solver type is provided and necessary parameters are present; otherwise, null.</returns>
         public static IShadingSolverResult? ShadingSolverResult(this ShadingSolverType shadingSolverType, DateTime dateTime, Plane? plane, IEnumerable<IPolygonalFace2D>? polygonalFace2Ds)
         {
