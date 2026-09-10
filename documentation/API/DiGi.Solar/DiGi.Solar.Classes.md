@@ -136,6 +136,158 @@ public System.Collections.Generic.List<DiGi.Geometry.Spatial.Interfaces.IPolygon
 [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.Geometry\.Spatial\.Interfaces\.IPolygonalFace3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.interfaces.ipolygonalface3d 'DiGi\.Geometry\.Spatial\.Interfaces\.IPolygonalFace3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
 A list of 3D polygonal faces, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') if the plane or 2D faces are not defined\.
 
+<a name='DiGi.Solar.Classes.IrradianceResult'></a>
+
+## IrradianceResult Class
+
+Represents the irradiance incident on a single surface orientation for a single hour, split into its direct beam, sky diffuse and ground\-reflected components\.
+
+Instances are plain carriers of already-computed values. Use [IrradianceResult\(this Vector3D, Vector3D, double, double, double, double\)](DiGi.Solar.md#DiGi.Solar.Create.IrradianceResult(thisDiGi.Geometry.Spatial.Classes.Vector3D,DiGi.Geometry.Spatial.Classes.Vector3D,double,double,double,double) 'DiGi\.Solar\.Create\.IrradianceResult\(this DiGi\.Geometry\.Spatial\.Classes\.Vector3D, DiGi\.Geometry\.Spatial\.Classes\.Vector3D, double, double, double, double\)') to compute the components from radiation values and a surface orientation.
+
+```csharp
+public class IrradianceResult : DiGi.Core.Classes.SerializableResult, DiGi.Solar.Interfaces.ISolarSerializableObject, DiGi.Solar.Interfaces.ISolarObject, DiGi.Core.Interfaces.IObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → IrradianceResult
+
+Implements [ISolarSerializableObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarSerializableObject 'DiGi\.Solar\.Interfaces\.ISolarSerializableObject'), [ISolarObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarObject 'DiGi\.Solar\.Interfaces\.ISolarObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject')
+### Constructors
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(DiGi.Solar.Classes.IrradianceResult)'></a>
+
+## IrradianceResult\(IrradianceResult\) Constructor
+
+Initializes a new instance of the [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult') class by copying an existing instance\.
+
+```csharp
+public IrradianceResult(DiGi.Solar.Classes.IrradianceResult? irradianceResult);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(DiGi.Solar.Classes.IrradianceResult).irradianceResult'></a>
+
+`irradianceResult` [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult')
+
+The source [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult') to copy from\.
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(double,double,double,double)'></a>
+
+## IrradianceResult\(double, double, double, double\) Constructor
+
+Initializes a new instance of the [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult') class from already\-computed irradiance components\.
+
+```csharp
+public IrradianceResult(double beam, double diffuse, double ground, double albedo);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(double,double,double,double).beam'></a>
+
+`beam` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The direct beam irradiance on the surface, in W/m2\.
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(double,double,double,double).diffuse'></a>
+
+`diffuse` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The sky diffuse irradiance on the surface, in W/m2\.
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(double,double,double,double).ground'></a>
+
+`ground` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The ground\-reflected irradiance on the surface, in W/m2\.
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(double,double,double,double).albedo'></a>
+
+`albedo` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The ground reflectance used to compute the ground\-reflected component, as a decimal fraction\.
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## IrradianceResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult') class from a JSON object\.
+
+```csharp
+public IrradianceResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.IrradianceResult.IrradianceResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the irradiance data\.
+### Properties
+
+<a name='DiGi.Solar.Classes.IrradianceResult.Albedo'></a>
+
+## IrradianceResult\.Albedo Property
+
+Gets the ground reflectance used to compute [Ground](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult.Ground 'DiGi\.Solar\.Classes\.IrradianceResult\.Ground'), as a decimal fraction\.
+
+```csharp
+public double Albedo { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.IrradianceResult.Beam'></a>
+
+## IrradianceResult\.Beam Property
+
+Gets the direct beam irradiance on the surface, in W/m2\. Zero when the sun is behind the surface\.
+
+```csharp
+public double Beam { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.IrradianceResult.Diffuse'></a>
+
+## IrradianceResult\.Diffuse Property
+
+Gets the sky diffuse irradiance on the surface, in W/m2\.
+
+```csharp
+public double Diffuse { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.IrradianceResult.Ground'></a>
+
+## IrradianceResult\.Ground Property
+
+Gets the ground\-reflected irradiance on the surface, in W/m2\.
+
+```csharp
+public double Ground { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.IrradianceResult.Total'></a>
+
+## IrradianceResult\.Total Property
+
+Gets the total irradiance incident on an unshaded surface, in W/m2, being the sum of [Beam](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult.Beam 'DiGi\.Solar\.Classes\.IrradianceResult\.Beam'), [Diffuse](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult.Diffuse 'DiGi\.Solar\.Classes\.IrradianceResult\.Diffuse') and [Ground](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult.Ground 'DiGi\.Solar\.Classes\.IrradianceResult\.Ground')\.
+
+```csharp
+public double Total { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
 <a name='DiGi.Solar.Classes.NumericalShadingSolverResult'></a>
 
 ## NumericalShadingSolverResult Class
@@ -1003,3 +1155,155 @@ public ShadingSolverResultRelation(System.Text.Json.Nodes.JsonObject? jsonObject
 `jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
 
 The JSON object containing relation data, or null\.
+
+<a name='DiGi.Solar.Classes.SolarPowerResult'></a>
+
+## SolarPowerResult Class
+
+Represents the total solar power incident on a partially shaded surface for a single hour\.
+
+The shadow blocks the direct beam component only. Sky diffuse and ground-reflected radiation still reach the shaded part of the surface, so the components are applied to different areas.
+
+Instances are plain carriers of already-computed values. Use [SolarPowerResult\(this IrradianceResult, double, double\)](DiGi.Solar.md#DiGi.Solar.Create.SolarPowerResult(thisDiGi.Solar.Classes.IrradianceResult,double,double) 'DiGi\.Solar\.Create\.SolarPowerResult\(this DiGi\.Solar\.Classes\.IrradianceResult, double, double\)') or [SolarPowerResult\_ByShadingFactor\(this IrradianceResult, double, double\)](DiGi.Solar.md#DiGi.Solar.Create.SolarPowerResult_ByShadingFactor(thisDiGi.Solar.Classes.IrradianceResult,double,double) 'DiGi\.Solar\.Create\.SolarPowerResult\_ByShadingFactor\(this DiGi\.Solar\.Classes\.IrradianceResult, double, double\)') to build one.
+
+```csharp
+public class SolarPowerResult : DiGi.Core.Classes.SerializableResult, DiGi.Solar.Interfaces.ISolarSerializableObject, DiGi.Solar.Interfaces.ISolarObject, DiGi.Core.Interfaces.IObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → SolarPowerResult
+
+Implements [ISolarSerializableObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarSerializableObject 'DiGi\.Solar\.Interfaces\.ISolarSerializableObject'), [ISolarObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarObject 'DiGi\.Solar\.Interfaces\.ISolarObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject')
+### Constructors
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.SolarPowerResult(DiGi.Solar.Classes.IrradianceResult,double,double)'></a>
+
+## SolarPowerResult\(IrradianceResult, double, double\) Constructor
+
+Initializes a new instance of the [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult') class\.
+
+```csharp
+public SolarPowerResult(DiGi.Solar.Classes.IrradianceResult? irradianceResult, double totalArea, double unshadedArea);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.SolarPowerResult(DiGi.Solar.Classes.IrradianceResult,double,double).irradianceResult'></a>
+
+`irradianceResult` [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult')
+
+The [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult') whose components are applied to the areas below\.
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.SolarPowerResult(DiGi.Solar.Classes.IrradianceResult,double,double).totalArea'></a>
+
+`totalArea` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The total area of the surface, in m2\.
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.SolarPowerResult(DiGi.Solar.Classes.IrradianceResult,double,double).unshadedArea'></a>
+
+`unshadedArea` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The area of the surface in direct sunlight, in m2\.
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.SolarPowerResult(DiGi.Solar.Classes.SolarPowerResult)'></a>
+
+## SolarPowerResult\(SolarPowerResult\) Constructor
+
+Initializes a new instance of the [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult') class by copying an existing instance\.
+
+```csharp
+public SolarPowerResult(DiGi.Solar.Classes.SolarPowerResult? solarPowerResult);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.SolarPowerResult(DiGi.Solar.Classes.SolarPowerResult).solarPowerResult'></a>
+
+`solarPowerResult` [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult')
+
+The source [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult') to copy from\.
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.SolarPowerResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## SolarPowerResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult') class from a JSON object\.
+
+```csharp
+public SolarPowerResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.SolarPowerResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the solar power data\.
+### Properties
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.IrradianceResult'></a>
+
+## SolarPowerResult\.IrradianceResult Property
+
+Gets the [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult') the power is derived from\.
+
+```csharp
+public DiGi.Solar.Classes.IrradianceResult? IrradianceResult { get; }
+```
+
+#### Property Value
+[IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult')
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.Power'></a>
+
+## SolarPowerResult\.Power Property
+
+Gets the total solar power incident on the surface, in W\.
+
+Computed as the unshaded area times the beam component, plus the total area times the sum of the sky diffuse and ground-reflected components.
+
+Returns [System\.Double\.NaN](https://learn.microsoft.com/en-us/dotnet/api/system.double.nan 'System\.Double\.NaN') when [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult.IrradianceResult 'DiGi\.Solar\.Classes\.SolarPowerResult\.IrradianceResult') is null, which the factories never produce but deserialization of an incomplete document can.
+
+```csharp
+public double Power { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.ShadedArea'></a>
+
+## SolarPowerResult\.ShadedArea Property
+
+Gets the area of the surface in shadow, in m2, being [TotalArea](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult.TotalArea 'DiGi\.Solar\.Classes\.SolarPowerResult\.TotalArea') less [UnshadedArea](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult.UnshadedArea 'DiGi\.Solar\.Classes\.SolarPowerResult\.UnshadedArea')\.
+
+```csharp
+public double ShadedArea { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.TotalArea'></a>
+
+## SolarPowerResult\.TotalArea Property
+
+Gets the total area of the surface, in m2\.
+
+```csharp
+public double TotalArea { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.SolarPowerResult.UnshadedArea'></a>
+
+## SolarPowerResult\.UnshadedArea Property
+
+Gets the area of the surface in direct sunlight, in m2\. Never greater than [TotalArea](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult.TotalArea 'DiGi\.Solar\.Classes\.SolarPowerResult\.TotalArea')\.
+
+```csharp
+public double UnshadedArea { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')

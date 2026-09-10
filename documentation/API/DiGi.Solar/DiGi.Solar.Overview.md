@@ -6,5 +6,6 @@
 | :--- | :--- |
 | [DiGi\.Solar](DiGi.Solar.md 'DiGi\.Solar') | |
 | [DiGi\.Solar\.Classes](DiGi.Solar.Classes.md 'DiGi\.Solar\.Classes') | |
+| [DiGi\.Solar\.Constants](DiGi.Solar.Constants.md 'DiGi\.Solar\.Constants') | |
 | [DiGi\.Solar\.Enums](DiGi.Solar.Enums.md 'DiGi\.Solar\.Enums') | |
 | [DiGi\.Solar\.Interfaces](DiGi.Solar.Interfaces.md 'DiGi\.Solar\.Interfaces') | |

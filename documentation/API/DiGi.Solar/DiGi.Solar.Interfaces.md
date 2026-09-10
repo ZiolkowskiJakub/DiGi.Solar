@@ -185,16 +185,35 @@ public interface ISolarObject : DiGi.Core.Interfaces.IObject
 ```
 
 Derived  
+↳ [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult')  
 ↳ [ShadingElement](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingElement 'DiGi\.Solar\.Classes\.ShadingElement')  
 ↳ [ShadingModel](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel 'DiGi\.Solar\.Classes\.ShadingModel')  
 ↳ [ShadingRelationCluster](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingRelationCluster 'DiGi\.Solar\.Classes\.ShadingRelationCluster')  
 ↳ [ShadingSolverResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResult 'DiGi\.Solar\.Classes\.ShadingSolverResult')  
 ↳ [ShadingSolverResultRelation](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResultRelation 'DiGi\.Solar\.Classes\.ShadingSolverResultRelation')  
+↳ [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult')  
 ↳ [IShadingElement](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingElement 'DiGi\.Solar\.Interfaces\.IShadingElement')  
 ↳ [IShadingObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingObject 'DiGi\.Solar\.Interfaces\.IShadingObject')  
 ↳ [IShadingRelation](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingRelation 'DiGi\.Solar\.Interfaces\.IShadingRelation')  
 ↳ [IShadingSerializableObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingSerializableObject 'DiGi\.Solar\.Interfaces\.IShadingSerializableObject')  
 ↳ [IShadingSolverResult](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingSolverResult 'DiGi\.Solar\.Interfaces\.IShadingSolverResult')  
-↳ [IShadingUniqueObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingUniqueObject 'DiGi\.Solar\.Interfaces\.IShadingUniqueObject')
+↳ [IShadingUniqueObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingUniqueObject 'DiGi\.Solar\.Interfaces\.IShadingUniqueObject')  
+↳ [ISolarSerializableObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarSerializableObject 'DiGi\.Solar\.Interfaces\.ISolarSerializableObject')
 
 Implements [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject')
+
+<a name='DiGi.Solar.Interfaces.ISolarSerializableObject'></a>
+
+## ISolarSerializableObject Interface
+
+Defines a contract for solar objects that can be serialized to and from JSON\.
+
+```csharp
+public interface ISolarSerializableObject : DiGi.Solar.Interfaces.ISolarObject, DiGi.Core.Interfaces.IObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject
+```
+
+Derived  
+↳ [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult')  
+↳ [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult')
+
+Implements [ISolarObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarObject 'DiGi\.Solar\.Interfaces\.ISolarObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject')
