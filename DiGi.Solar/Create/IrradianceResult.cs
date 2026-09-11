@@ -15,7 +15,7 @@ namespace DiGi.Solar
         /// <param name="globalHorizontalRadiation">The global horizontal radiation, in W/m2.</param>
         /// <param name="directNormalRadiation">The direct normal radiation, in W/m2.</param>
         /// <param name="diffuseHorizontalRadiation">The diffuse horizontal radiation, in W/m2.</param>
-        /// <param name="albedo">The ground reflectance as a decimal fraction, as resolved by <see cref="Query.Albedo(double?, double?)"/>.</param>
+        /// <param name="albedo">The ground reflectance as a decimal fraction, as resolved by <see cref="Query.Albedo(double?, bool)"/>.</param>
         /// <returns>A <see cref="Classes.IrradianceResult"/> carrying the three components and the ground reflectance used, or <see langword="null"/> if either vector is null or has no length, or if any radiation value is not a number or is negative, or if the ground reflectance is not a number or lies outside the range 0 to 1.</returns>
         public static Classes.IrradianceResult? IrradianceResult(this Vector3D? surfaceNormal, Vector3D? sunDirection, double globalHorizontalRadiation, double directNormalRadiation, double diffuseHorizontalRadiation, double albedo)
         {

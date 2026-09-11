@@ -65,7 +65,7 @@ The diffuse horizontal radiation, in W/m2\.
 
 `albedo` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
-The ground reflectance as a decimal fraction, as resolved by [Albedo\(Nullable&lt;double&gt;, Nullable&lt;double&gt;\)](DiGi.Solar.md#DiGi.Solar.Query.Albedo(System.Nullable_double_,System.Nullable_double_) 'DiGi\.Solar\.Query\.Albedo\(System\.Nullable\<double\>, System\.Nullable\<double\>\)')\.
+The ground reflectance as a decimal fraction, as resolved by [Albedo\(Nullable&lt;double&gt;, bool\)](DiGi.Solar.md#DiGi.Solar.Query.Albedo(System.Nullable_double_,bool) 'DiGi\.Solar\.Query\.Albedo\(System\.Nullable\<double\>, bool\)')\.
 
 #### Returns
 [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult')  
@@ -154,32 +154,34 @@ public static class Query
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Query
 ### Methods
 
-<a name='DiGi.Solar.Query.Albedo(System.Nullable_double_,System.Nullable_double_)'></a>
+<a name='DiGi.Solar.Query.Albedo(System.Nullable_double_,bool)'></a>
 
-## Query\.Albedo\(Nullable\<double\>, Nullable\<double\>\) Method
+## Query\.Albedo\(Nullable\<double\>, bool\) Method
 
 Resolves the ground reflectance \(albedo\) to be used for the ground\-reflected irradiance component\.
 
-Snow lying on the ground takes precedence over any supplied albedo and resolves to [Snow](DiGi.Solar.Constants.md#DiGi.Solar.Constants.Albedo.Snow 'DiGi\.Solar\.Constants\.Albedo\.Snow').
+When the ground is snow covered, the supplied albedo is ignored and the result is [Snow](DiGi.Solar.Constants.md#DiGi.Solar.Constants.Albedo.Snow 'DiGi\.Solar\.Constants\.Albedo\.Snow').
 
-An albedo that is null, not a number, zero or negative, or greater than one resolves to [Default](DiGi.Solar.Constants.md#DiGi.Solar.Constants.Albedo.Default 'DiGi\.Solar\.Constants\.Albedo\.Default'). The upper bound subsumes the weather-file missing marker [Missing](DiGi.Solar.Constants.md#DiGi.Solar.Constants.Albedo.Missing 'DiGi\.Solar\.Constants\.Albedo\.Missing'). Zero is treated as missing because weather records that carry no albedo column report it as zero rather than as the missing marker, and taking that at face value would silently remove the whole ground-reflected component.
+An albedo that is null, not a number, zero or negative, or greater than one resolves to [Default](DiGi.Solar.Constants.md#DiGi.Solar.Constants.Albedo.Default 'DiGi\.Solar\.Constants\.Albedo\.Default'). The upper bound subsumes the weather-file missing marker 999. Zero is treated as missing because weather records that carry no albedo column report it as zero rather than as the missing marker, and taking that at face value would silently remove the whole ground-reflected component.
+
+An EPW snow depth is not a reliable indicator of lying snow: POL_Warsaw.123750_IWEC.epw reports a constant 3.0 cm for every hour from April to November, a filler value that resolves to the snow reflectance for most of the year if read at face value (ZiolkowskiJakub/DiGi.Solar#2). The caller must decide [snowCovered](DiGi.Solar.md#DiGi.Solar.Query.Albedo(System.Nullable_double_,bool).snowCovered 'DiGi\.Solar\.Query\.Albedo\(System\.Nullable\<double\>, bool\)\.snowCovered') from a source it trusts rather than pass a raw snow depth.
 
 ```csharp
-public static double Albedo(System.Nullable<double> albedo, System.Nullable<double> snowDepth);
+public static double Albedo(System.Nullable<double> albedo, bool snowCovered);
 ```
 #### Parameters
 
-<a name='DiGi.Solar.Query.Albedo(System.Nullable_double_,System.Nullable_double_).albedo'></a>
+<a name='DiGi.Solar.Query.Albedo(System.Nullable_double_,bool).albedo'></a>
 
 `albedo` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The ground reflectance as supplied by the weather record, as a decimal fraction\. May be null, or a missing marker\.
 
-<a name='DiGi.Solar.Query.Albedo(System.Nullable_double_,System.Nullable_double_).snowDepth'></a>
+<a name='DiGi.Solar.Query.Albedo(System.Nullable_double_,bool).snowCovered'></a>
 
-`snowDepth` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+`snowCovered` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
-The depth of snow lying on the ground, in centimetres\. May be null when unknown, or carry the weather\-file missing marker [Missing](DiGi.Solar.Constants.md#DiGi.Solar.Constants.Albedo.Missing 'DiGi\.Solar\.Constants\.Albedo\.Missing'), neither of which counts as snow\.
+Whether snow is lying on the ground, decided by the caller\. See the summary for why the library does not accept a snow depth\.
 
 #### Returns
 [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')  
