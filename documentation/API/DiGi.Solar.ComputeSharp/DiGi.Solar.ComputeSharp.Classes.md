@@ -77,6 +77,21 @@ public DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType ComputeDeviceType { get; 
 
 #### Property Value
 [ComputeDeviceType](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType')
+
+<a name='DiGi.Solar.ComputeSharp.Classes.ShadingSolver.MaxBufferBytes'></a>
+
+## ShadingSolver\.MaxBufferBytes Property
+
+Gets or sets the upper bound, in bytes, of each intersection buffer the solver allocates \(the device buffer and its managed readback alike\)\. Defaults to 256 MB\.
+
+Receivers are dispatched in row blocks sized to fit the budget, so a smaller value lowers peak memory at the cost of more dispatches. A single row larger than the budget still runs (one row per block).
+
+```csharp
+public long MaxBufferBytes { get; set; }
+```
+
+#### Property Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
 ### Methods
 
 <a name='DiGi.Solar.ComputeSharp.Classes.ShadingSolver.Solve()'></a>
@@ -88,6 +103,8 @@ Executes the shading calculation process, utilizing GPU shaders to determine int
 Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).
 
 If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun. A sample with no receiver face to cap against gets no result at all, so TryGetShadingFactor returns false for it.
+
+Receiver triangles are processed in row blocks sized by [MaxBufferBytes](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.MaxBufferBytes 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.MaxBufferBytes'), so memory no longer grows with the square of the triangle count. The results do not depend on the block size.
 
 When no supported device matching [ComputeDeviceType](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.ComputeDeviceType 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.ComputeDeviceType') can be created (see [GraphicsDevice\(this ComputeDeviceType\)](DiGi.Solar.ComputeSharp.md#DiGi.Solar.ComputeSharp.Create.GraphicsDevice(thisDiGi.Solar.ComputeSharp.Enums.ComputeDeviceType) 'DiGi\.Solar\.ComputeSharp\.Create\.GraphicsDevice\(this DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\)')), [Default](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Default 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Default') falls back to the CPU solve of the base class,
             while an explicit [Hardware](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Hardware 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Hardware') request returns false. The obsolete `ComputeDeviceType.Software` (WARP) never gets a device, so it always returns false (ZiolkowskiJakub/DiGi.Solar#10).

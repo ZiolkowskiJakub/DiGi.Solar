@@ -8,6 +8,7 @@ using DiGi.Geometry.Spatial.Interfaces;
 using DiGi.Solar.Classes;
 using DiGi.Solar.ComputeSharp.Enums;
 using DiGi.Solar.Interfaces;
+using System.Runtime.CompilerServices;
 
 namespace DiGi.Solar.ComputeSharp.Classes
 {
@@ -43,9 +44,16 @@ namespace DiGi.Solar.ComputeSharp.Classes
         public ComputeDeviceType ComputeDeviceType { get; set; } = ComputeDeviceType.Default;
 
         /// <summary>
+        /// Gets or sets the upper bound, in bytes, of each intersection buffer the solver allocates (the device buffer and its managed readback alike). Defaults to 256 MB.
+        /// <para>Receivers are dispatched in row blocks sized to fit the budget, so a smaller value lowers peak memory at the cost of more dispatches. A single row larger than the budget still runs (one row per block).</para>
+        /// </summary>
+        public long MaxBufferBytes { get; set; } = 256L * 1024 * 1024;
+
+        /// <summary>
         /// Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects.
         /// <para>Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).</para>
         /// <para>If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun. A sample with no receiver face to cap against gets no result at all, so TryGetShadingFactor returns false for it.</para>
+        /// <para>Receiver triangles are processed in row blocks sized by <see cref="MaxBufferBytes"/>, so memory no longer grows with the square of the triangle count. The results do not depend on the block size.</para>
         /// <para>When no supported device matching <see cref="ComputeDeviceType"/> can be created (see <see cref="Create.GraphicsDevice(ComputeDeviceType)"/>), <see cref="ComputeDeviceType.Default"/> falls back to the CPU solve of the base class,
         /// while an explicit <see cref="ComputeDeviceType.Hardware"/> request returns false. The obsolete <c>ComputeDeviceType.Software</c> (WARP) never gets a device, so it always returns false (ZiolkowskiJakub/DiGi.Solar#10).</para>
         /// </summary>
@@ -145,34 +153,40 @@ namespace DiGi.Solar.ComputeSharp.Classes
             int count_Triangle = tuples.Count;
             int count_Triangle_ShadingOnly = tuples_ShadingOnly.Count;
 
+            // Receivers are processed in row blocks of blockSize triangles, one block of both passes at a time,
+            // so each intersection buffer holds blockSize x columns cells instead of the full N x N (or N x M)
+            // matrix. One block size drives both passes; the product stays within int by the clamp.
+            int columns = System.Math.Max(System.Math.Max(count_Triangle, count_Triangle_ShadingOnly), 1);
+            long rows = MaxBufferBytes / ((long)Unsafe.SizeOf<Triangle3Intersection>() * columns);
+            int blockSize = (int)System.Math.Clamp(rows, 1L, System.Math.Min((long)count_Triangle, int.MaxValue / columns));
+
             using ReadOnlyBuffer<Triangle3> readOnlyBuffer = graphicDevice.AllocateReadOnlyBuffer(tuples.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
-            using ReadWriteBuffer<Triangle3Intersection> readWriteBuffer = graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(count_Triangle * count_Triangle);
+            using ReadWriteBuffer<Triangle3Intersection> readWriteBuffer = graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(blockSize * count_Triangle);
 
             using ReadOnlyBuffer<Triangle3>? readOnlyBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadOnlyBuffer(tuples_ShadingOnly.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
-            using ReadWriteBuffer<Triangle3Intersection>? readWriteBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(count_Triangle * count_Triangle_ShadingOnly);
+            using ReadWriteBuffer<Triangle3Intersection>? readWriteBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(blockSize * count_Triangle_ShadingOnly);
 
             // Reusable CPU-side readback buffers. The GPU buffer sizes are constant across all
-            // directions, so allocate the managed arrays once and copy straight into them each
-            // direction instead of allocating a new array plus rebuilding a List on every call
-            // (the previous Create.List did both, per direction).
-            Triangle3Intersection[] triangle3Intersections_Readback = new Triangle3Intersection[count_Triangle * count_Triangle];
-            Triangle3Intersection[]? triangle3Intersections_Readback_ShadingOnly = count_Triangle_ShadingOnly == 0 ? null : new Triangle3Intersection[count_Triangle * count_Triangle_ShadingOnly];
+            // blocks and directions, so allocate the managed arrays once and copy straight into
+            // them instead of allocating a new array per dispatch.
+            Triangle3Intersection[] triangle3Intersections_Readback = new Triangle3Intersection[blockSize * count_Triangle];
+            Triangle3Intersection[]? triangle3Intersections_Readback_ShadingOnly = count_Triangle_ShadingOnly == 0 ? null : new Triangle3Intersection[blockSize * count_Triangle_ShadingOnly];
 
-            Func<ReadWriteBuffer<Triangle3Intersection>, Triangle3Intersection[], int, int, List<List<Triangle3D>>> convert = new((readWriteBuffer_Temp, triangle3Intersections, count_1, count_2) =>
+            // Reads back the first rowCount rows of a block and appends each receiver triangle's shadow
+            // triangles to triangle3DsArray[rowOffset + row]. Only rowCount x columnCount cells are read:
+            // a reused buffer keeps the previous block's results beyond that range.
+            Action<ReadWriteBuffer<Triangle3Intersection>, Triangle3Intersection[], int, int, int, List<Triangle3D>?[]> convert = new((readWriteBuffer_Temp, triangle3Intersections, rowOffset, rowCount, columnCount, triangle3DsArray) =>
             {
-                readWriteBuffer_Temp.CopyTo(triangle3Intersections);
+                readWriteBuffer_Temp.CopyTo(triangle3Intersections, 0, 0, rowCount * columnCount);
 
-                List<List<Triangle3D>> result = [];
-
-                for (int i = 0; i < count_1; i++)
+                for (int i = 0; i < rowCount; i++)
                 {
-                    List<Triangle3D> triangle3Ds = [];
-                    for (int j = 0; j < count_2; j++)
+                    for (int j = 0; j < columnCount; j++)
                     {
                         // Reference the buffer element in place; Triangle3Intersection is a large
                         // (6 x Coordinate3) struct and IsNaN() only reads Point_1, so copying the
                         // whole struct per cell (most of which are NaN) would be pure overhead.
-                        ref Triangle3Intersection triangle3Intersection = ref triangle3Intersections[(i * count_2) + j];
+                        ref Triangle3Intersection triangle3Intersection = ref triangle3Intersections[(i * columnCount) + j];
                         if (triangle3Intersection.IsNaN())
                         {
                             continue;
@@ -188,15 +202,11 @@ namespace DiGi.Solar.ComputeSharp.Classes
                         {
                             if (geometry is Triangle3 triangle3 && DiGi.ComputeSharp.Geometry.Spatial.Convert.ToDiGi(triangle3) is Triangle3D triangle3D)
                             {
-                                triangle3Ds.Add(triangle3D);
+                                (triangle3DsArray[rowOffset + i] ??= []).Add(triangle3D);
                             }
                         }
                     }
-
-                    result.Add(triangle3Ds);
                 }
-
-                return result;
             });
 
             List<List<IShadingSolverResult>?> shadingSolverResultsList = [.. Enumerable.Repeat<List<IShadingSolverResult>?>(null, count_ShadingElement)];
@@ -242,27 +252,22 @@ namespace DiGi.Solar.ComputeSharp.Classes
             {
                 Coordinate3 coordinate3 = DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(tuple_DateTime.Item1);
 
-                graphicDevice.For(count_Triangle, count_Triangle, new Triangle3ShadingComputeShader(readOnlyBuffer, readWriteBuffer, coordinate3, tolerance));
+                // Shadow triangles per receiver triangle, filled lazily: most receiver triangles are hit by nothing.
+                // Within each row the self-shading hits are appended before the shading-only hits, whatever the
+                // block size, so the union input (and therefore every result) does not depend on the tiling.
+                List<Triangle3D>?[] triangle3DsArray = new List<Triangle3D>?[count_Triangle];
 
-                List<List<Triangle3D>> triangle3DsList = convert(readWriteBuffer, triangle3Intersections_Readback, count_Triangle, count_Triangle);
-
-                if (readOnlyBuffer_ShadingOnly != null && readWriteBuffer_ShadingOnly != null)
+                for (int rowOffset = 0; rowOffset < count_Triangle; rowOffset += blockSize)
                 {
-                    graphicDevice.For(count_Triangle, count_Triangle_ShadingOnly, new Triangle3ExternalShadingComputeShader(readOnlyBuffer, readOnlyBuffer_ShadingOnly, readWriteBuffer_ShadingOnly, coordinate3, tolerance));
+                    int rowCount = System.Math.Min(blockSize, count_Triangle - rowOffset);
 
-                    List<List<Triangle3D>> triangle3DsList_ShadingOnly = convert(readWriteBuffer_ShadingOnly, triangle3Intersections_Readback_ShadingOnly!, count_Triangle, count_Triangle_ShadingOnly);
-                    for (int i = 0; i < triangle3DsList_ShadingOnly.Count; i++)
+                    graphicDevice.For(rowCount, count_Triangle, new Triangle3ShadingRowOffsetComputeShader(readOnlyBuffer, readWriteBuffer, coordinate3, rowOffset, tolerance));
+                    convert(readWriteBuffer, triangle3Intersections_Readback, rowOffset, rowCount, count_Triangle, triangle3DsArray);
+
+                    if (readOnlyBuffer_ShadingOnly != null && readWriteBuffer_ShadingOnly != null && triangle3Intersections_Readback_ShadingOnly != null)
                     {
-                        List<Triangle3D> triangle3s = triangle3DsList_ShadingOnly[i];
-                        if (triangle3s != null && triangle3s.Count != 0)
-                        {
-                            if (triangle3DsList[i] == null)
-                            {
-                                triangle3DsList[i] = [];
-                            }
-
-                            triangle3DsList[i].AddRange(triangle3s);
-                        }
+                        graphicDevice.For(rowCount, count_Triangle_ShadingOnly, new Triangle3ExternalShadingRowOffsetComputeShader(readOnlyBuffer, readOnlyBuffer_ShadingOnly, readWriteBuffer_ShadingOnly, coordinate3, rowOffset, tolerance));
+                        convert(readWriteBuffer_ShadingOnly, triangle3Intersections_Readback_ShadingOnly, rowOffset, rowCount, count_Triangle_ShadingOnly, triangle3DsArray);
                     }
                 }
 
@@ -279,7 +284,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                     List<Triangle3D> triangle3Ds = [];
                     foreach (int j in triangleIndices_ByElement[i])
                     {
-                        List<Triangle3D> triangle3Ds_Temp = triangle3DsList[j];
+                        List<Triangle3D>? triangle3Ds_Temp = triangle3DsArray[j];
                         if (triangle3Ds_Temp == null || triangle3Ds_Temp.Count == 0)
                         {
                             continue;
