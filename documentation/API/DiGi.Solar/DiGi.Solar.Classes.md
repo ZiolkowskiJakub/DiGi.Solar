@@ -1066,6 +1066,8 @@ For every receiver and sun direction, each triangle of the other elements (recei
 
 Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).
 
+If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun.
+
 The result matches the ComputeSharp solver, except for a caster that crosses the receiver plane: here only its part on the sun side casts a shadow,
             where the ComputeSharp solver decides per intersection piece from its centroid.
 

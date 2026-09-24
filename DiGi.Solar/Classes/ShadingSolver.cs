@@ -59,6 +59,7 @@ namespace DiGi.Solar.Classes
         /// <para>For every receiver and sun direction, each triangle of the other elements (receivers and shading-only casters) is clipped to the part lying between the sun and the receiver plane,
         /// projected onto that plane along the sun direction, merged with the other shadows and clipped to the receiver face.</para>
         /// <para>Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).</para>
+        /// <para>If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun.</para>
         /// <para>The result matches the ComputeSharp solver, except for a caster that crosses the receiver plane: here only its part on the sun side casts a shadow,
         /// where the ComputeSharp solver decides per intersection piece from its centroid.</para>
         /// </summary>
@@ -349,6 +350,14 @@ namespace DiGi.Solar.Classes
                                 {
                                     polygonalFace2Ds_Result.AddRange(polygonalFace2Ds_Intersection);
                                 }
+                            }
+                        }
+                        else
+                        {
+                            // The merge failed (it stays possible even after the snap-rounding retry DiGi.Geometry makes): keep the unmerged shadows clipped to the receiver and capped at its area, so a failed merge reads as shade, overstated at worst, and never as full sun. The receiver face is never null here, so the fallback is the shadow set or an empty one.
+                            if (Query.ShadowFaces(polygonalFace2D, polygonalFace2Ds_Shadow) is List<PolygonalFace2D> polygonalFace2Ds_Fallback)
+                            {
+                                polygonalFace2Ds_Result.AddRange(polygonalFace2Ds_Fallback);
                             }
                         }
                     }

@@ -2,7 +2,6 @@ using ComputeSharp;
 using DiGi.ComputeSharp.Spatial.Classes;
 using DiGi.Geometry.Planar;
 using DiGi.Geometry.Planar.Classes;
-using DiGi.Geometry.Planar.Interfaces;
 using DiGi.Geometry.Spatial;
 using DiGi.Geometry.Spatial.Classes;
 using DiGi.Geometry.Spatial.Interfaces;
@@ -46,6 +45,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
         /// <summary>
         /// Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects.
         /// <para>Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).</para>
+        /// <para>If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun. A sample with no receiver face to cap against gets no result at all, so TryGetShadingFactor returns false for it.</para>
         /// <para>When no supported device matching <see cref="ComputeDeviceType"/> can be created (see <see cref="Create.GraphicsDevice(ComputeDeviceType)"/>), <see cref="ComputeDeviceType.Default"/> falls back to the CPU solve of the base class,
         /// while an explicit <see cref="ComputeDeviceType.Hardware"/> request returns false. The obsolete <c>ComputeDeviceType.Software</c> (WARP) never gets a device, so it always returns false (ZiolkowskiJakub/DiGi.Solar#10).</para>
         /// </summary>
@@ -83,7 +83,10 @@ namespace DiGi.Solar.ComputeSharp.Classes
             // Captured in lockstep with shadingElements (non-shading-only) during triangulation
             // below, so the per-element plane is read from the same clone used to triangulate
             // rather than deep-cloning each PolygonalFace3D a second time later.
+            // The face is captured the same way: the shadow fallback clips and caps against it
+            // when the shadow union fails, and it is the only place the receiver's 2D face is needed.
             List<Geometry.Spatial.Classes.Plane?> planes_ShadingElements = [];
+            List<PolygonalFace2D?> polygonalFace2Ds_ShadingElements = [];
 
             List<Tuple<Triangle3D, int>> tuples_ShadingOnly = [];
             List<IShadingElement> shadingElements_ShadingOnly = [];
@@ -118,6 +121,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                     shadingElements_Temp = shadingElements;
                     tuples_Temp = tuples;
                     planes_ShadingElements.Add(polygonalFace3D?.Plane);
+                    polygonalFace2Ds_ShadingElements.Add(polygonalFace3D?.Geometry2D as PolygonalFace2D);
                 }
 
                 int index = shadingElements_Temp.Count;
@@ -270,6 +274,8 @@ namespace DiGi.Solar.ComputeSharp.Classes
                         return;
                     }
 
+                    PolygonalFace2D? polygonalFace2D_Receiver = polygonalFace2Ds_ShadingElements[i];
+
                     List<Triangle3D> triangle3Ds = [];
                     foreach (int j in triangleIndices_ByElement[i])
                     {
@@ -288,7 +294,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                     List<PolygonalFace2D>? polygonalFace2Ds = null;
                     if (triangle3Ds.Count != 0)
                     {
-                        List<IPolygonalFace2D> polygonalFace2Ds_Shadow = [];
+                        List<PolygonalFace2D> polygonalFace2Ds_Shadow = [];
                         foreach (Triangle3D triangle3D in triangle3Ds)
                         {
                             if (plane.Convert(triangle3D) is not Triangle2D triangle2D)
@@ -296,7 +302,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                                 continue;
                             }
 
-                            if (Geometry.Planar.Create.PolygonalFace2D(triangle2D) is IPolygonalFace2D polygonalFace2D_Shadow)
+                            if (Geometry.Planar.Create.PolygonalFace2D(triangle2D) is PolygonalFace2D polygonalFace2D_Shadow)
                             {
                                 polygonalFace2Ds_Shadow.Add(polygonalFace2D_Shadow);
                             }
@@ -306,7 +312,10 @@ namespace DiGi.Solar.ComputeSharp.Classes
                         // NTS pass, replacing the previous Union (Polygon2D) + Create.PolygonalFace2Ds
                         // re-polygonization. Unlike the Polygon2D union it keeps interior voids, so
                         // ring-shaped shadows no longer over-count the shaded area.
-                        polygonalFace2Ds = polygonalFace2Ds_Shadow.Union();
+                        List<PolygonalFace2D>? polygonalFace2Ds_Union = polygonalFace2Ds_Shadow.Union();
+
+                        // The merge failed (it stays possible even after the snap-rounding retry DiGi.Geometry makes): keep the unmerged shadows clipped to the receiver and capped at its area, so a failed merge reads as shade, overstated at worst, and never as full sun. Without a receiver face there is nothing to cap against, so no result is emitted for the sample instead of a wrong one.
+                        polygonalFace2Ds = polygonalFace2Ds_Union ?? Solar.Query.ShadowFaces(polygonalFace2D_Receiver, polygonalFace2Ds_Shadow);
                     }
 
                     polygonalFace2Ds ??= [];

@@ -253,6 +253,37 @@ The maximum angle difference allowed to group two directions together\.
 [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Tuple&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.tuple-2 'System\.Tuple\`2')[DiGi\.Geometry\.Spatial\.Classes\.Vector3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.vector3d 'DiGi\.Geometry\.Spatial\.Classes\.Vector3D')[,](https://learn.microsoft.com/en-us/dotnet/api/system.tuple-2 'System\.Tuple\`2')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.tuple-2 'System\.Tuple\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
 A list of tuples, where each tuple contains a representative [DiGi\.Geometry\.Spatial\.Classes\.Vector3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.vector3d 'DiGi\.Geometry\.Spatial\.Classes\.Vector3D') and a list of [System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime') values associated with that direction; returns [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') if the input dictionary is null\.
 
+<a name='DiGi.Solar.Query.ShadowFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_)'></a>
+
+## Query\.ShadowFaces\(this PolygonalFace2D, IEnumerable\<PolygonalFace2D\>\) Method
+
+Builds the shadow of a receiver from unmerged shadow faces: each face is clipped to the receiver, and faces are kept in input order while their total area stays within the receiver face area\.
+
+Use when the merged union of the shadows is unavailable (`DiGi.Geometry.Planar.Query.Union` returned `null` even after its snap-rounding retry). Overlapping shadows are then counted twice, up to the cap, which overstates the shaded area but never above the receiver: a failed merge reads as shade rather than as full sun.
+
+For shadows that do not overlap each other the result is exactly the union, so the fallback is exact rather than merely bounded in the common case. The summed area stays within the receiver area unless the first clipped face is larger than the receiver on its own, which the clip itself cannot produce (it is inside the receiver) other than by numerical overshoot.
+
+```csharp
+public static System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.PolygonalFace2D>? ShadowFaces(this DiGi.Geometry.Planar.Classes.PolygonalFace2D? polygonalFace2D_Receiver, System.Collections.Generic.IEnumerable<DiGi.Geometry.Planar.Classes.PolygonalFace2D> polygonalFace2Ds_Shadow);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Query.ShadowFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_).polygonalFace2D_Receiver'></a>
+
+`polygonalFace2D_Receiver` [DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')
+
+The receiver face, in its own plane coordinates, or null when the receiver has no face to clip and cap against\.
+
+<a name='DiGi.Solar.Query.ShadowFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_).polygonalFace2Ds_Shadow'></a>
+
+`polygonalFace2Ds_Shadow` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The shadow faces, in the receiver's plane coordinates, as the solver produced them before merging\.
+
+#### Returns
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
+A list of shadow faces clipped to the receiver, whose summed area never exceeds the receiver face area; or null when [polygonalFace2D\_Receiver](DiGi.Solar.md#DiGi.Solar.Query.ShadowFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_).polygonalFace2D_Receiver 'DiGi\.Solar\.Query\.ShadowFaces\(this DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, System\.Collections\.Generic\.IEnumerable\<DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>\)\.polygonalFace2D\_Receiver') is null\.
+
 <a name='DiGi.Solar.Query.SunDirection(thisDiGi.Core.Classes.Coordinates,DiGi.Core.Enums.UTC,System.DateTime,bool)'></a>
 
 ## Query\.SunDirection\(this Coordinates, UTC, DateTime, bool\) Method
