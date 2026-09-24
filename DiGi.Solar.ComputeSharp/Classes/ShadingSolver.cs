@@ -56,6 +56,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
         /// <summary>
         /// Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects.
+        /// <para>Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).</para>
         /// </summary>
         /// <returns>True if the solving operation completed successfully; otherwise, false.</returns>
         public bool Solve()
@@ -290,35 +291,36 @@ namespace DiGi.Solar.ComputeSharp.Classes
                         triangle3Ds.AddRange(triangle3Ds_Temp);
                     }
 
-                    if (triangle3Ds.Count == 0)
+                    // A receiver reached by no shadow triangle is fully sunlit: it still gets a
+                    // result (shaded area 0) so TryGetShadingFactor reports 0 instead of failing,
+                    // and interpolation never bridges a sunlit gap between two shaded samples.
+                    List<PolygonalFace2D>? polygonalFace2Ds = null;
+                    if (triangle3Ds.Count != 0)
                     {
-                        return;
-                    }
-
-                    List<IPolygonalFace2D> polygonalFace2Ds_Shadow = [];
-                    foreach (Triangle3D triangle3D in triangle3Ds)
-                    {
-                        if (plane.Convert(triangle3D) is not Triangle2D triangle2D)
+                        List<IPolygonalFace2D> polygonalFace2Ds_Shadow = [];
+                        foreach (Triangle3D triangle3D in triangle3Ds)
                         {
-                            continue;
+                            if (plane.Convert(triangle3D) is not Triangle2D triangle2D)
+                            {
+                                continue;
+                            }
+
+                            if (Geometry.Planar.Create.PolygonalFace2D(triangle2D) is IPolygonalFace2D polygonalFace2D_Shadow)
+                            {
+                                polygonalFace2Ds_Shadow.Add(polygonalFace2D_Shadow);
+                            }
                         }
 
-                        if (Geometry.Planar.Create.PolygonalFace2D(triangle2D) is IPolygonalFace2D polygonalFace2D_Shadow)
-                        {
-                            polygonalFace2Ds_Shadow.Add(polygonalFace2D_Shadow);
-                        }
+                        // Single hole-preserving union: produces PolygonalFace2D faces directly in one
+                        // NTS pass, replacing the previous Union (Polygon2D) + Create.PolygonalFace2Ds
+                        // re-polygonization. Unlike the Polygon2D union it keeps interior voids, so
+                        // ring-shaped shadows no longer over-count the shaded area.
+                        polygonalFace2Ds = polygonalFace2Ds_Shadow.Union();
                     }
 
-                    // Single hole-preserving union: produces PolygonalFace2D faces directly in one
-                    // NTS pass, replacing the previous Union (Polygon2D) + Create.PolygonalFace2Ds
-                    // re-polygonization. Unlike the Polygon2D union it keeps interior voids, so
-                    // ring-shaped shadows no longer over-count the shaded area.
-                    List<PolygonalFace2D>? polygonalFace2Ds = polygonalFace2Ds_Shadow.Union();
+                    polygonalFace2Ds ??= [];
 
-                    if (shadingSolverResultsList[i] is null)
-                    {
-                        shadingSolverResultsList[i] = [];
-                    }
+                    shadingSolverResultsList[i] ??= [];
 
                     foreach (DateTime dateTime in tuple_DateTime.Item2)
                     {
@@ -330,6 +332,9 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 });
             }
 
+            // Every receiver with a plane now carries a result list for each direction group it was
+            // solved in, so Assign receives null only for elements without a plane; elements that
+            // failed triangulation never entered shadingElements.
             for (int i = 0; i < count_ShadingElement; i++)
             {
                 ShadingModel.Assign(shadingElements[i], shadingSolverResultsList[i]);

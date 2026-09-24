@@ -160,6 +160,8 @@ namespace DiGi.Solar.Classes
 
         /// <summary>
         /// Attempts to calculate the shading factor for a specific element at a given date and time.
+        /// <para>Results exist only for timestamps where the sun is above the horizon (Query.SunDirection with includeNight: false). A false return for a night timestamp means "no beam component", not "unknown"; callers computing irradiance treat it as beam = 0.</para>
+        /// <para>For a daytime timestamp of a solved receiver, a false return means the element was not solved (no plane or no triangulation).</para>
         /// </summary>
         /// <param name="shadingElement">The shading element to evaluate.</param>
         /// <param name="dateTime">The date and time of evaluation.</param>

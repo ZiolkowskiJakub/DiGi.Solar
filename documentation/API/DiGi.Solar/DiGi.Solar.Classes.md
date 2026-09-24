@@ -769,6 +769,10 @@ A list of matching solver results, or null if the element is null or no results 
 
 Attempts to calculate the shading factor for a specific element at a given date and time\.
 
+Results exist only for timestamps where the sun is above the horizon (Query.SunDirection with includeNight: false). A false return for a night timestamp means "no beam component", not "unknown"; callers computing irradiance treat it as beam = 0.
+
+For a daytime timestamp of a solved receiver, a false return means the element was not solved (no plane or no triangulation).
+
 ```csharp
 public bool TryGetShadingFactor(DiGi.Solar.Interfaces.IShadingElement shadingElement, System.DateTime dateTime, out double factor, bool interpolation=true);
 ```

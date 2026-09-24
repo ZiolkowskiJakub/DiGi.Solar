@@ -98,6 +98,8 @@ public DiGi.Solar.ComputeSharp.Classes.ShadingSolverOptions? ShadingSolverOption
 
 Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects\.
 
+Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).
+
 ```csharp
 public bool Solve();
 ```
