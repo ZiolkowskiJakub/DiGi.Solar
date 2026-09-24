@@ -6,13 +6,14 @@ namespace DiGi.Solar.ComputeSharp
     {
         /// <summary>
         /// Gets the ComputeSharp graphics device matching the specified <see cref="ComputeDeviceType"/>.
+        /// <para>Only a device passing <see cref="Query.IsSupported(global::ComputeSharp.GraphicsDevice?)"/> is returned: hardware-accelerated and supporting double precision, which the shading shaders require.
+        /// The WARP software device is never returned (ZiolkowskiJakub/DiGi.Solar#10), neither for the obsolete <c>ComputeDeviceType.Software</c> nor as the ComputeSharp default device on a machine without a hardware adapter.</para>
         /// <para>The returned device is shared by ComputeSharp and must not be disposed by the caller.</para>
         /// </summary>
         /// <param name="computeDeviceType">The type of device to get.</param>
         /// <returns>
-        /// The default device (<see cref="ComputeDeviceType.Default"/>), the first hardware-accelerated device (<see cref="ComputeDeviceType.Hardware"/>)
-        /// or the WARP software device (<see cref="ComputeDeviceType.Software"/>); <see langword="null"/> when no such device can be created
-        /// or it does not support double precision, which the shading shaders require.
+        /// The ComputeSharp default device (<see cref="ComputeDeviceType.Default"/>) or the first supported hardware-accelerated device (<see cref="ComputeDeviceType.Hardware"/>);
+        /// <see langword="null"/> when no such device can be created or it is not supported, and always for <c>ComputeDeviceType.Software</c>.
         /// </returns>
         public static global::ComputeSharp.GraphicsDevice? GraphicsDevice(this ComputeDeviceType computeDeviceType)
         {
@@ -26,11 +27,7 @@ namespace DiGi.Solar.ComputeSharp
                         break;
 
                     case ComputeDeviceType.Hardware:
-                        result = global::ComputeSharp.GraphicsDevice.QueryDevices(x => x.IsHardwareAccelerated).FirstOrDefault(x => x.IsDoublePrecisionSupportAvailable());
-                        break;
-
-                    case ComputeDeviceType.Software:
-                        result = global::ComputeSharp.GraphicsDevice.QueryDevices(x => !x.IsHardwareAccelerated).FirstOrDefault();
+                        result = global::ComputeSharp.GraphicsDevice.QueryDevices(x => x.IsHardwareAccelerated).FirstOrDefault(x => x.IsSupported());
                         break;
 
                     default:
@@ -46,7 +43,7 @@ namespace DiGi.Solar.ComputeSharp
                 return null;
             }
 
-            if (result == null || !result.IsDoublePrecisionSupportAvailable())
+            if (!result.IsSupported())
             {
                 return null;
             }

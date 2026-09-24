@@ -14,7 +14,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
 {
     /// <summary>
     /// Provides a solver implementation to calculate shading effects on objects using ComputeSharp for GPU acceleration.
-    /// <para>Derives from the CPU <see cref="Solar.Classes.ShadingSolver"/>, which it falls back to when <see cref="ComputeDeviceType"/> is <see cref="ComputeDeviceType.Default"/> and no device is available.</para>
+    /// <para>Derives from the CPU <see cref="Solar.Classes.ShadingSolver"/>, which it falls back to when <see cref="ComputeDeviceType"/> is <see cref="ComputeDeviceType.Default"/> and no supported hardware device is available.</para>
     /// </summary>
     public class ShadingSolver : Solar.Classes.ShadingSolver
     {
@@ -46,8 +46,8 @@ namespace DiGi.Solar.ComputeSharp.Classes
         /// <summary>
         /// Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects.
         /// <para>Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).</para>
-        /// <para>When no device matching <see cref="ComputeDeviceType"/> can be created, <see cref="ComputeDeviceType.Default"/> falls back to the CPU solve of the base class,
-        /// while an explicit <see cref="ComputeDeviceType.Hardware"/> or <see cref="ComputeDeviceType.Software"/> request returns false.</para>
+        /// <para>When no supported device matching <see cref="ComputeDeviceType"/> can be created (see <see cref="Create.GraphicsDevice(ComputeDeviceType)"/>), <see cref="ComputeDeviceType.Default"/> falls back to the CPU solve of the base class,
+        /// while an explicit <see cref="ComputeDeviceType.Hardware"/> request returns false. The obsolete <c>ComputeDeviceType.Software</c> (WARP) never gets a device, so it always returns false (ZiolkowskiJakub/DiGi.Solar#10).</para>
         /// </summary>
         /// <returns>True if the solving operation completed successfully; otherwise, false.</returns>
         public override bool Solve()
@@ -202,7 +202,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
             Dictionary<DateTime, Vector3D> dictionary = [];
             foreach (DateTime dateTime in dateTimes)
             {
-                Vector3D? sunDirection = Query.SunDirection(ShadingModel, dateTime, false);
+                Vector3D? sunDirection = Solar.Query.SunDirection(ShadingModel, dateTime, false);
                 if (sunDirection == null)
                 {
                     continue;
@@ -211,7 +211,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 dictionary[dateTime] = sunDirection;
             }
 
-            List<Tuple<Vector3D, List<DateTime>>>? tuples_DateTime = Query.GroupDirections(dictionary, angleTolerance);
+            List<Tuple<Vector3D, List<DateTime>>>? tuples_DateTime = Solar.Query.GroupDirections(dictionary, angleTolerance);
             if (tuples_DateTime == null || tuples_DateTime.Count == 0)
             {
                 return true;

@@ -9,7 +9,7 @@
 
 Provides a solver implementation to calculate shading effects on objects using ComputeSharp for GPU acceleration\.
 
-Derives from the CPU [DiGi\.Solar\.Classes\.ShadingSolver](https://learn.microsoft.com/en-us/dotnet/api/digi.solar.classes.shadingsolver 'DiGi\.Solar\.Classes\.ShadingSolver'), which it falls back to when [ComputeDeviceType](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.ComputeDeviceType 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.ComputeDeviceType') is [Default](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Default 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Default') and no device is available.
+Derives from the CPU [DiGi\.Solar\.Classes\.ShadingSolver](https://learn.microsoft.com/en-us/dotnet/api/digi.solar.classes.shadingsolver 'DiGi\.Solar\.Classes\.ShadingSolver'), which it falls back to when [ComputeDeviceType](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.ComputeDeviceType 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.ComputeDeviceType') is [Default](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Default 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Default') and no supported hardware device is available.
 
 ```csharp
 public class ShadingSolver : DiGi.Solar.Classes.ShadingSolver
@@ -87,8 +87,8 @@ Executes the shading calculation process, utilizing GPU shaders to determine int
 
 Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).
 
-When no device matching [ComputeDeviceType](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.ComputeDeviceType 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.ComputeDeviceType') can be created, [Default](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Default 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Default') falls back to the CPU solve of the base class,
-            while an explicit [Hardware](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Hardware 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Hardware') or [Software](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Software 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Software') request returns false.
+When no supported device matching [ComputeDeviceType](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.ComputeDeviceType 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.ComputeDeviceType') can be created (see [GraphicsDevice\(this ComputeDeviceType\)](DiGi.Solar.ComputeSharp.md#DiGi.Solar.ComputeSharp.Create.GraphicsDevice(thisDiGi.Solar.ComputeSharp.Enums.ComputeDeviceType) 'DiGi\.Solar\.ComputeSharp\.Create\.GraphicsDevice\(this DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\)')), [Default](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Default 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Default') falls back to the CPU solve of the base class,
+            while an explicit [Hardware](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Hardware 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Hardware') request returns false. The obsolete `ComputeDeviceType.Software` (WARP) never gets a device, so it always returns false (ZiolkowskiJakub/DiGi.Solar#10).
 
 ```csharp
 public override bool Solve();
