@@ -2,10 +2,11 @@ using DiGi.Core.Classes;
 using DiGi.Core.Interfaces;
 using DiGi.Solar.Enums;
 using DiGi.Solar.Interfaces;
+using System;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
-namespace DiGi.Solar.ComputeSharp.Classes
+namespace DiGi.Solar.Classes
 {
     /// <summary>
     /// Provides configuration options for the shading solver, including tolerances and time series settings.
@@ -48,25 +49,25 @@ namespace DiGi.Solar.ComputeSharp.Classes
         /// <summary>
         /// Gets or sets the angle tolerance used by the shading solver.
         /// </summary>
-        [JsonInclude, JsonPropertyName("AngleTolerance")]
+        [JsonInclude, JsonPropertyName(nameof(AngleTolerance))]
         public double AngleTolerance { get; set; } = Core.Constants.Tolerance.Angle / 2;
 
         /// <summary>
         /// Gets or sets the type of shading solver to be employed.
         /// </summary>
-        [JsonInclude, JsonPropertyName("ShadingSolverType")]
+        [JsonInclude, JsonPropertyName(nameof(ShadingSolverType))]
         public ShadingSolverType ShadingSolverType { get; set; } = ShadingSolverType.Numerical;
 
         /// <summary>
         /// Gets or sets the time series used for shading calculations.
         /// </summary>
-        [JsonInclude, JsonPropertyName("TimeSeries")]
+        [JsonInclude, JsonPropertyName(nameof(TimeSeries))]
         public ITimeSeries TimeSeries { get; set; } = new DateTimeSeries(DateTime.Now);
 
         /// <summary>
         /// Gets or sets the distance tolerance used by the shading solver.
         /// </summary>
-        [JsonInclude, JsonPropertyName("Tolerance")]
+        [JsonInclude, JsonPropertyName(nameof(Tolerance))]
         public double Tolerance { get; set; } = Core.Constants.Tolerance.Distance;
     }
 }

@@ -1,7 +1,5 @@
 using ComputeSharp;
 using DiGi.ComputeSharp.Spatial.Classes;
-using DiGi.Core.Classes;
-using DiGi.Core.Interfaces;
 using DiGi.Geometry.Planar;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.Geometry.Planar.Interfaces;
@@ -9,14 +7,16 @@ using DiGi.Geometry.Spatial;
 using DiGi.Geometry.Spatial.Classes;
 using DiGi.Geometry.Spatial.Interfaces;
 using DiGi.Solar.Classes;
+using DiGi.Solar.ComputeSharp.Enums;
 using DiGi.Solar.Interfaces;
 
 namespace DiGi.Solar.ComputeSharp.Classes
 {
     /// <summary>
     /// Provides a solver implementation to calculate shading effects on objects using ComputeSharp for GPU acceleration.
+    /// <para>Derives from the CPU <see cref="Solar.Classes.ShadingSolver"/>, which it falls back to when <see cref="ComputeDeviceType"/> is <see cref="ComputeDeviceType.Default"/> and no device is available.</para>
     /// </summary>
-    public class ShadingSolver : IShadingObject, ISolver
+    public class ShadingSolver : Solar.Classes.ShadingSolver
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ShadingSolver"/> class with the specified shading model and options.
@@ -24,9 +24,8 @@ namespace DiGi.Solar.ComputeSharp.Classes
         /// <param name="shadingModel">The shading model to be used for calculations.</param>
         /// <param name="shadingSolverOptions">The options that configure the solver's behavior.</param>
         public ShadingSolver(ShadingModel? shadingModel, ShadingSolverOptions? shadingSolverOptions)
+            : base(shadingModel, shadingSolverOptions)
         {
-            ShadingModel = shadingModel;
-            ShadingSolverOptions = shadingSolverOptions;
         }
 
         /// <summary>
@@ -35,31 +34,23 @@ namespace DiGi.Solar.ComputeSharp.Classes
         /// <param name="shadingModel">The shading model to be used for calculations.</param>
         /// <param name="dateTimes">An array of date-time values for which shading should be calculated.</param>
         public ShadingSolver(ShadingModel? shadingModel, DateTime[]? dateTimes)
+            : base(shadingModel, dateTimes)
         {
-            ShadingModel = shadingModel;
-            ShadingSolverOptions = new ShadingSolverOptions();
-            if (dateTimes != null)
-            {
-                ShadingSolverOptions.TimeSeries = new DateTimeCollection(dateTimes);
-            }
         }
 
         /// <summary>
-        /// Gets or sets the <see cref="ShadingModel"/> associated with this solver.
+        /// Gets or sets the compute device the shaders run on. Defaults to <see cref="ComputeDeviceType.Default"/>.
         /// </summary>
-        public ShadingModel? ShadingModel { get; set; }
-
-        /// <summary>
-        /// Gets or sets the <see cref="ShadingSolverOptions"/> that define the parameters for the solving process.
-        /// </summary>
-        public ShadingSolverOptions? ShadingSolverOptions { get; set; }
+        public ComputeDeviceType ComputeDeviceType { get; set; } = ComputeDeviceType.Default;
 
         /// <summary>
         /// Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects.
         /// <para>Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).</para>
+        /// <para>When no device matching <see cref="ComputeDeviceType"/> can be created, <see cref="ComputeDeviceType.Default"/> falls back to the CPU solve of the base class,
+        /// while an explicit <see cref="ComputeDeviceType.Hardware"/> or <see cref="ComputeDeviceType.Software"/> request returns false.</para>
         /// </summary>
         /// <returns>True if the solving operation completed successfully; otherwise, false.</returns>
-        public bool Solve()
+        public override bool Solve()
         {
             if (ShadingSolverOptions == null || ShadingModel == null)
             {
@@ -78,10 +69,10 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 return true;
             }
 
-            GraphicsDevice graphicDevice = GraphicsDevice.GetDefault();
+            GraphicsDevice? graphicDevice = Create.GraphicsDevice(ComputeDeviceType);
             if (graphicDevice == null)
             {
-                return false;
+                return ComputeDeviceType == ComputeDeviceType.Default && base.Solve();
             }
 
             double tolerance = ShadingSolverOptions.Tolerance;
@@ -324,7 +315,7 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
                     foreach (DateTime dateTime in tuple_DateTime.Item2)
                     {
-                        if (Create.ShadingSolverResult(ShadingSolverOptions.ShadingSolverType, dateTime, plane, polygonalFace2Ds) is IShadingSolverResult shadingSolverResult)
+                        if (Solar.Create.ShadingSolverResult(ShadingSolverOptions.ShadingSolverType, dateTime, plane, polygonalFace2Ds) is IShadingSolverResult shadingSolverResult)
                         {
                             shadingSolverResultsList[i]!.Add(shadingSolverResult);
                         }

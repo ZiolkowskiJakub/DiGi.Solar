@@ -3,8 +3,10 @@ using DiGi.Geometry.Spatial.Classes;
 using DiGi.Solar.Classes;
 using DiGi.Solar.Enums;
 using DiGi.Solar.Interfaces;
+using System;
+using System.Collections.Generic;
 
-namespace DiGi.Solar.ComputeSharp
+namespace DiGi.Solar
 {
     public static partial class Create
     {

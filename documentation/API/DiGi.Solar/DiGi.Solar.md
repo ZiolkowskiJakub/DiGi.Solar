@@ -71,6 +71,45 @@ The ground reflectance as a decimal fraction, as resolved by [Albedo\(Nullable&l
 [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult')  
 A [IrradianceResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.IrradianceResult 'DiGi\.Solar\.Classes\.IrradianceResult') carrying the three components and the ground reflectance used, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') if either vector is null or has no length, or if any radiation value is not a number or is negative, or if the ground reflectance is not a number or lies outside the range 0 to 1\.
 
+<a name='DiGi.Solar.Create.ShadingSolverResult(thisDiGi.Solar.Enums.ShadingSolverType,System.DateTime,DiGi.Geometry.Spatial.Classes.Plane,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Interfaces.IPolygonalFace2D_)'></a>
+
+## Create\.ShadingSolverResult\(this ShadingSolverType, DateTime, Plane, IEnumerable\<IPolygonalFace2D\>\) Method
+
+Creates an [IShadingSolverResult](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingSolverResult 'DiGi\.Solar\.Interfaces\.IShadingSolverResult') based on the specified [ShadingSolverType](DiGi.Solar.Enums.md#DiGi.Solar.Enums.ShadingSolverType 'DiGi\.Solar\.Enums\.ShadingSolverType'), date and time, plane, and polygonal faces\.
+
+```csharp
+public static DiGi.Solar.Interfaces.IShadingSolverResult? ShadingSolverResult(this DiGi.Solar.Enums.ShadingSolverType shadingSolverType, System.DateTime dateTime, DiGi.Geometry.Spatial.Classes.Plane? plane, System.Collections.Generic.IEnumerable<DiGi.Geometry.Planar.Interfaces.IPolygonalFace2D>? polygonalFace2Ds);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Create.ShadingSolverResult(thisDiGi.Solar.Enums.ShadingSolverType,System.DateTime,DiGi.Geometry.Spatial.Classes.Plane,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Interfaces.IPolygonalFace2D_).shadingSolverType'></a>
+
+`shadingSolverType` [ShadingSolverType](DiGi.Solar.Enums.md#DiGi.Solar.Enums.ShadingSolverType 'DiGi\.Solar\.Enums\.ShadingSolverType')
+
+The [ShadingSolverType](DiGi.Solar.Enums.md#DiGi.Solar.Enums.ShadingSolverType 'DiGi\.Solar\.Enums\.ShadingSolverType') that determines the type of shading solver result to be created\.
+
+<a name='DiGi.Solar.Create.ShadingSolverResult(thisDiGi.Solar.Enums.ShadingSolverType,System.DateTime,DiGi.Geometry.Spatial.Classes.Plane,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Interfaces.IPolygonalFace2D_).dateTime'></a>
+
+`dateTime` [System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')
+
+The [System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime') representing the time for which the shading is solved\.
+
+<a name='DiGi.Solar.Create.ShadingSolverResult(thisDiGi.Solar.Enums.ShadingSolverType,System.DateTime,DiGi.Geometry.Spatial.Classes.Plane,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Interfaces.IPolygonalFace2D_).plane'></a>
+
+`plane` [DiGi\.Geometry\.Spatial\.Classes\.Plane](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.plane 'DiGi\.Geometry\.Spatial\.Classes\.Plane')
+
+The [DiGi\.Geometry\.Spatial\.Classes\.Plane](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.plane 'DiGi\.Geometry\.Spatial\.Classes\.Plane') used for geometrical shading calculations\. This can be null if a numerical solver is used\.
+
+<a name='DiGi.Solar.Create.ShadingSolverResult(thisDiGi.Solar.Enums.ShadingSolverType,System.DateTime,DiGi.Geometry.Spatial.Classes.Plane,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Interfaces.IPolygonalFace2D_).polygonalFace2Ds'></a>
+
+`polygonalFace2Ds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.Geometry\.Planar\.Interfaces\.IPolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.interfaces.ipolygonalface2d 'DiGi\.Geometry\.Planar\.Interfaces\.IPolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+An [System\.Collections\.Generic\.IEnumerable&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1') representing the faces involved in shading calculations\.
+
+#### Returns
+[IShadingSolverResult](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingSolverResult 'DiGi\.Solar\.Interfaces\.IShadingSolverResult')  
+An implementation of [IShadingSolverResult](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingSolverResult 'DiGi\.Solar\.Interfaces\.IShadingSolverResult') if a valid solver type is provided and necessary parameters are present; otherwise, null\.
+
 <a name='DiGi.Solar.Create.SolarPowerResult(thisDiGi.Solar.Classes.IrradianceResult,double,double)'></a>
 
 ## Create\.SolarPowerResult\(this IrradianceResult, double, double\) Method

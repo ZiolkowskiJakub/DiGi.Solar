@@ -70,6 +70,8 @@ public interface IShadingObject : DiGi.Solar.Interfaces.ISolarObject, DiGi.Core.
 
 Derived  
 ↳ [ShadingElement](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingElement 'DiGi\.Solar\.Classes\.ShadingElement')  
+↳ [ShadingSolver](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver 'DiGi\.Solar\.Classes\.ShadingSolver')  
+↳ [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions')  
 ↳ [ShadingSolverResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResult 'DiGi\.Solar\.Classes\.ShadingSolverResult')  
 ↳ [ShadingSolverResultRelation](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResultRelation 'DiGi\.Solar\.Classes\.ShadingSolverResultRelation')  
 ↳ [IShadingElement](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingElement 'DiGi\.Solar\.Interfaces\.IShadingElement')  
@@ -107,6 +109,7 @@ public interface IShadingSerializableObject : DiGi.Solar.Interfaces.IShadingObje
 
 Derived  
 ↳ [ShadingElement](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingElement 'DiGi\.Solar\.Classes\.ShadingElement')  
+↳ [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions')  
 ↳ [ShadingSolverResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResult 'DiGi\.Solar\.Classes\.ShadingSolverResult')  
 ↳ [IShadingElement](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingElement 'DiGi\.Solar\.Interfaces\.IShadingElement')  
 ↳ [IShadingSolverResult](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingSolverResult 'DiGi\.Solar\.Interfaces\.IShadingSolverResult')  
@@ -189,6 +192,8 @@ Derived
 ↳ [ShadingElement](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingElement 'DiGi\.Solar\.Classes\.ShadingElement')  
 ↳ [ShadingModel](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel 'DiGi\.Solar\.Classes\.ShadingModel')  
 ↳ [ShadingRelationCluster](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingRelationCluster 'DiGi\.Solar\.Classes\.ShadingRelationCluster')  
+↳ [ShadingSolver](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver 'DiGi\.Solar\.Classes\.ShadingSolver')  
+↳ [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions')  
 ↳ [ShadingSolverResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResult 'DiGi\.Solar\.Classes\.ShadingSolverResult')  
 ↳ [ShadingSolverResultRelation](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResultRelation 'DiGi\.Solar\.Classes\.ShadingSolverResultRelation')  
 ↳ [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult')  

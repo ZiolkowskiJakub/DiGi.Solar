@@ -964,6 +964,233 @@ The relation containing the references to the solver results\.
 [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[TShadingSolverResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingRelationCluster.GetShadingSolverResults_TShadingSolverResult_(DiGi.Solar.Classes.ShadingSolverResultRelation).TShadingSolverResult 'DiGi\.Solar\.Classes\.ShadingRelationCluster\.GetShadingSolverResults\<TShadingSolverResult\>\(DiGi\.Solar\.Classes\.ShadingSolverResultRelation\)\.TShadingSolverResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
 A list of [TShadingSolverResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingRelationCluster.GetShadingSolverResults_TShadingSolverResult_(DiGi.Solar.Classes.ShadingSolverResultRelation).TShadingSolverResult 'DiGi\.Solar\.Classes\.ShadingRelationCluster\.GetShadingSolverResults\<TShadingSolverResult\>\(DiGi\.Solar\.Classes\.ShadingSolverResultRelation\)\.TShadingSolverResult') instances, or null if no results are found\.
 
+<a name='DiGi.Solar.Classes.ShadingSolver'></a>
+
+## ShadingSolver Class
+
+Provides a solver that calculates the shading of shading elements on the CPU, with no GPU or ComputeSharp dependency\.
+
+Shading-only elements cast shadows on the receivers but are never shaded themselves and receive no results.
+
+```csharp
+public class ShadingSolver : DiGi.Solar.Interfaces.IShadingObject, DiGi.Solar.Interfaces.ISolarObject, DiGi.Core.Interfaces.IObject, DiGi.Core.Interfaces.ISolver, DiGi.Core.Interfaces.IEvaluator
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → ShadingSolver
+
+Implements [IShadingObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingObject 'DiGi\.Solar\.Interfaces\.IShadingObject'), [ISolarObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarObject 'DiGi\.Solar\.Interfaces\.ISolarObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [DiGi\.Core\.Interfaces\.ISolver](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.isolver 'DiGi\.Core\.Interfaces\.ISolver'), [DiGi\.Core\.Interfaces\.IEvaluator](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.ievaluator 'DiGi\.Core\.Interfaces\.IEvaluator')
+### Constructors
+
+<a name='DiGi.Solar.Classes.ShadingSolver.ShadingSolver(DiGi.Solar.Classes.ShadingModel,DiGi.Solar.Classes.ShadingSolverOptions)'></a>
+
+## ShadingSolver\(ShadingModel, ShadingSolverOptions\) Constructor
+
+Initializes a new instance of the [ShadingSolver](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver 'DiGi\.Solar\.Classes\.ShadingSolver') class with the specified shading model and options\.
+
+```csharp
+public ShadingSolver(DiGi.Solar.Classes.ShadingModel? shadingModel, DiGi.Solar.Classes.ShadingSolverOptions? shadingSolverOptions);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ShadingSolver.ShadingSolver(DiGi.Solar.Classes.ShadingModel,DiGi.Solar.Classes.ShadingSolverOptions).shadingModel'></a>
+
+`shadingModel` [ShadingModel](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel 'DiGi\.Solar\.Classes\.ShadingModel')
+
+The shading model to be used for calculations\.
+
+<a name='DiGi.Solar.Classes.ShadingSolver.ShadingSolver(DiGi.Solar.Classes.ShadingModel,DiGi.Solar.Classes.ShadingSolverOptions).shadingSolverOptions'></a>
+
+`shadingSolverOptions` [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions')
+
+The options that configure the solver's behavior\.
+
+<a name='DiGi.Solar.Classes.ShadingSolver.ShadingSolver(DiGi.Solar.Classes.ShadingModel,System.DateTime[])'></a>
+
+## ShadingSolver\(ShadingModel, DateTime\[\]\) Constructor
+
+Initializes a new instance of the [ShadingSolver](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver 'DiGi\.Solar\.Classes\.ShadingSolver') class with the specified shading model and a collection of date\-times\.
+
+```csharp
+public ShadingSolver(DiGi.Solar.Classes.ShadingModel? shadingModel, System.DateTime[]? dateTimes);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ShadingSolver.ShadingSolver(DiGi.Solar.Classes.ShadingModel,System.DateTime[]).shadingModel'></a>
+
+`shadingModel` [ShadingModel](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel 'DiGi\.Solar\.Classes\.ShadingModel')
+
+The shading model to be used for calculations\.
+
+<a name='DiGi.Solar.Classes.ShadingSolver.ShadingSolver(DiGi.Solar.Classes.ShadingModel,System.DateTime[]).dateTimes'></a>
+
+`dateTimes` [System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+An array of date\-time values for which shading should be calculated\.
+### Properties
+
+<a name='DiGi.Solar.Classes.ShadingSolver.ShadingModel'></a>
+
+## ShadingSolver\.ShadingModel Property
+
+Gets or sets the [ShadingModel](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver.ShadingModel 'DiGi\.Solar\.Classes\.ShadingSolver\.ShadingModel') associated with this solver\.
+
+```csharp
+public DiGi.Solar.Classes.ShadingModel? ShadingModel { get; set; }
+```
+
+#### Property Value
+[ShadingModel](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel 'DiGi\.Solar\.Classes\.ShadingModel')
+
+<a name='DiGi.Solar.Classes.ShadingSolver.ShadingSolverOptions'></a>
+
+## ShadingSolver\.ShadingSolverOptions Property
+
+Gets or sets the [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolver\.ShadingSolverOptions') that define the parameters for the solving process\.
+
+```csharp
+public DiGi.Solar.Classes.ShadingSolverOptions? ShadingSolverOptions { get; set; }
+```
+
+#### Property Value
+[ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions')
+### Methods
+
+<a name='DiGi.Solar.Classes.ShadingSolver.Solve()'></a>
+
+## ShadingSolver\.Solve\(\) Method
+
+Executes the shading calculation on the CPU and assigns the results to the receivers of the [ShadingModel](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver.ShadingModel 'DiGi\.Solar\.Classes\.ShadingSolver\.ShadingModel')\.
+
+For every receiver and sun direction, each triangle of the other elements (receivers and shading-only casters) is clipped to the part lying between the sun and the receiver plane,
+            projected onto that plane along the sun direction, merged with the other shadows and clipped to the receiver face.
+
+Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).
+
+The result matches the ComputeSharp solver, except for a caster that crosses the receiver plane: here only its part on the sun side casts a shadow,
+            where the ComputeSharp solver decides per intersection piece from its centroid.
+
+```csharp
+public virtual bool Solve();
+```
+
+Implements [Solve\(\)](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.isolver.solve 'DiGi\.Core\.Interfaces\.ISolver\.Solve')
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+True if the solving operation completed successfully; otherwise, false\.
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions'></a>
+
+## ShadingSolverOptions Class
+
+Provides configuration options for the shading solver, including tolerances and time series settings\.
+
+```csharp
+public class ShadingSolverOptions : DiGi.Core.Classes.SerializableObject, DiGi.Solar.Interfaces.IShadingSerializableObject, DiGi.Solar.Interfaces.IShadingObject, DiGi.Solar.Interfaces.ISolarObject, DiGi.Core.Interfaces.IObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject, DiGi.Core.Interfaces.IOptions
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → ShadingSolverOptions
+
+Implements [IShadingSerializableObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingSerializableObject 'DiGi\.Solar\.Interfaces\.IShadingSerializableObject'), [IShadingObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingObject 'DiGi\.Solar\.Interfaces\.IShadingObject'), [ISolarObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarObject 'DiGi\.Solar\.Interfaces\.ISolarObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject'), [DiGi\.Core\.Interfaces\.IOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.ioptions 'DiGi\.Core\.Interfaces\.IOptions')
+### Constructors
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.ShadingSolverOptions()'></a>
+
+## ShadingSolverOptions\(\) Constructor
+
+Initializes a new instance of the [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions') class with default values\.
+
+```csharp
+public ShadingSolverOptions();
+```
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.ShadingSolverOptions(DiGi.Solar.Classes.ShadingSolverOptions)'></a>
+
+## ShadingSolverOptions\(ShadingSolverOptions\) Constructor
+
+Initializes a new instance of the [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions') class by copying values from an existing options instance\.
+
+```csharp
+public ShadingSolverOptions(DiGi.Solar.Classes.ShadingSolverOptions? shadingSolverOptions);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.ShadingSolverOptions(DiGi.Solar.Classes.ShadingSolverOptions).shadingSolverOptions'></a>
+
+`shadingSolverOptions` [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions')
+
+The source shading solver options to copy from\.
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.ShadingSolverOptions(System.Text.Json.Nodes.JsonObject)'></a>
+
+## ShadingSolverOptions\(JsonObject\) Constructor
+
+Initializes a new instance of the [ShadingSolverOptions](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverOptions 'DiGi\.Solar\.Classes\.ShadingSolverOptions') class using a JSON object\.
+
+```csharp
+public ShadingSolverOptions(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.ShadingSolverOptions(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the options data\.
+### Properties
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.AngleTolerance'></a>
+
+## ShadingSolverOptions\.AngleTolerance Property
+
+Gets or sets the angle tolerance used by the shading solver\.
+
+```csharp
+public double AngleTolerance { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.ShadingSolverType'></a>
+
+## ShadingSolverOptions\.ShadingSolverType Property
+
+Gets or sets the type of shading solver to be employed\.
+
+```csharp
+public DiGi.Solar.Enums.ShadingSolverType ShadingSolverType { get; set; }
+```
+
+#### Property Value
+[ShadingSolverType](DiGi.Solar.Enums.md#DiGi.Solar.Enums.ShadingSolverType 'DiGi\.Solar\.Enums\.ShadingSolverType')
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.TimeSeries'></a>
+
+## ShadingSolverOptions\.TimeSeries Property
+
+Gets or sets the time series used for shading calculations\.
+
+```csharp
+public DiGi.Core.Interfaces.ITimeSeries TimeSeries { get; set; }
+```
+
+#### Property Value
+[DiGi\.Core\.Interfaces\.ITimeSeries](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.itimeseries 'DiGi\.Core\.Interfaces\.ITimeSeries')
+
+<a name='DiGi.Solar.Classes.ShadingSolverOptions.Tolerance'></a>
+
+## ShadingSolverOptions\.Tolerance Property
+
+Gets or sets the distance tolerance used by the shading solver\.
+
+```csharp
+public double Tolerance { get; set; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
 <a name='DiGi.Solar.Classes.ShadingSolverResult'></a>
 
 ## ShadingSolverResult Class

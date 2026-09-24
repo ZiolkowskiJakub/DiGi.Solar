@@ -6,3 +6,4 @@
 | :--- | :--- |
 | [DiGi\.Solar\.ComputeSharp](DiGi.Solar.ComputeSharp.md 'DiGi\.Solar\.ComputeSharp') | |
 | [DiGi\.Solar\.ComputeSharp\.Classes](DiGi.Solar.ComputeSharp.Classes.md 'DiGi\.Solar\.ComputeSharp\.Classes') | |
+| [DiGi\.Solar\.ComputeSharp\.Enums](DiGi.Solar.ComputeSharp.Enums.md 'DiGi\.Solar\.ComputeSharp\.Enums') | |
