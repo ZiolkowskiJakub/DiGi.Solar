@@ -82,9 +82,12 @@ public DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType ComputeDeviceType { get; 
 
 ## ShadingSolver\.MaxBufferBytes Property
 
-Gets or sets the upper bound, in bytes, of each intersection buffer the solver allocates \(the device buffer and its managed readback alike\)\. Defaults to 256 MB\.
+Gets or sets the upper bound, in bytes, of the shadow record buffer the solver allocates \(the device buffer and its managed readback alike\)\. Defaults to 256 MB\.
 
-Receivers are dispatched in row blocks sized to fit the budget, so a smaller value lowers peak memory at the cost of more dispatches. A single row larger than the budget still runs (one row per block).
+The buffer holds only the shadows found (one [DiGi\.ComputeSharp\.Spatial\.Classes\.ShadowPolygon2](https://learn.microsoft.com/en-us/dotnet/api/digi.computesharp.spatial.classes.shadowpolygon2 'DiGi\.ComputeSharp\.Spatial\.Classes\.ShadowPolygon2') per receiver and caster triangle pair that casts one), so it grows with the hits, not with receivers x triangles; it starts small and grows up to this bound.
+            When the hits of one receiver block would exceed it, the block is split into fewer receivers, so a smaller value lowers peak memory at the cost of more dispatches.
+            A single receiver always runs, even when its hits exceed the bound (one receiver has at most one record per caster triangle).
+            The shadows kept for the union after the readback are not bounded by this value: they grow with the total number of hits.
 
 ```csharp
 public long MaxBufferBytes { get; set; }
@@ -98,13 +101,18 @@ public long MaxBufferBytes { get; set; }
 
 ## ShadingSolver\.Solve\(\) Method
 
-Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects\.
+Executes the shading calculation, clipping and projecting every caster triangle onto every receiver on the GPU and merging the resulting shadows on the CPU\.
+
+For every receiver and sun direction, each triangle of the other elements (receivers and shading-only casters) is clipped to the part lying between the sun and the receiver plane and projected onto that plane along the sun direction
+            ([DiGi\.ComputeSharp\.Spatial\.Classes\.Triangle3ShadowProjectionComputeShader](https://learn.microsoft.com/en-us/dotnet/api/digi.computesharp.spatial.classes.triangle3shadowprojectioncomputeshader 'DiGi\.ComputeSharp\.Spatial\.Classes\.Triangle3ShadowProjectionComputeShader'), which appends only the shadows found); the shadows are then merged and clipped to the receiver face by [DiGi\.Solar\.Query\.ShadedFaces\(DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D,System\.Collections\.Generic\.IEnumerable\{DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\}\)](https://learn.microsoft.com/en-us/dotnet/api/digi.solar.query.shadedfaces#digi-solar-query-shadedfaces(digi-geometry-planar-classes-polygonalface2d-system-collections-generic-ienumerable{digi-geometry-planar-classes-polygonalface2d}) 'DiGi\.Solar\.Query\.ShadedFaces\(DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D,System\.Collections\.Generic\.IEnumerable\{DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\}\)'),
+            exactly as in the CPU solver, so the two solvers agree up to floating point round-off: a caster crossing the receiver plane casts only its sun-side part, and a receiver with the sun behind it is shaded by whatever lies in front of its plane.
 
 Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).
 
-If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun. A sample with no receiver face to cap against gets no result at all, so TryGetShadingFactor returns false for it.
+If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun.
+            A receiver without a plane frame or a planar face gets no results, so TryGetShadingFactor returns false for it; it still casts shadows on the others.
 
-Receiver triangles are processed in row blocks sized by [MaxBufferBytes](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.MaxBufferBytes 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.MaxBufferBytes'), so memory no longer grows with the square of the triangle count. The results do not depend on the block size.
+Receivers are dispatched in blocks whose shadows fit [MaxBufferBytes](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.MaxBufferBytes 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.MaxBufferBytes'); the shadows are sorted by receiver and caster triangle before the merge, so the results depend neither on the block size nor on the order the GPU appends them in.
 
 When no supported device matching [ComputeDeviceType](DiGi.Solar.ComputeSharp.Classes.md#DiGi.Solar.ComputeSharp.Classes.ShadingSolver.ComputeDeviceType 'DiGi\.Solar\.ComputeSharp\.Classes\.ShadingSolver\.ComputeDeviceType') can be created (see [GraphicsDevice\(this ComputeDeviceType\)](DiGi.Solar.ComputeSharp.md#DiGi.Solar.ComputeSharp.Create.GraphicsDevice(thisDiGi.Solar.ComputeSharp.Enums.ComputeDeviceType) 'DiGi\.Solar\.ComputeSharp\.Create\.GraphicsDevice\(this DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\)')), [Default](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Default 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Default') falls back to the CPU solve of the base class,
             while an explicit [Hardware](DiGi.Solar.ComputeSharp.Enums.md#DiGi.Solar.ComputeSharp.Enums.ComputeDeviceType.Hardware 'DiGi\.Solar\.ComputeSharp\.Enums\.ComputeDeviceType\.Hardware') request returns false. The obsolete `ComputeDeviceType.Software` (WARP) never gets a device, so it always returns false (ZiolkowskiJakub/DiGi.Solar#10).
@@ -117,4 +125,4 @@ Implements [Solve\(\)](https://learn.microsoft.com/en-us/dotnet/api/digi.core.in
 
 #### Returns
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
-True if the solving operation completed successfully; otherwise, false\.
+True if the solving operation completed successfully; otherwise, false, without assigning any result \(also when the device reports more shadows for one receiver than it has caster triangles, which only a faulty dispatch can produce\)\.

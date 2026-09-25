@@ -1,6 +1,5 @@
 using DiGi.Core.Classes;
 using DiGi.Core.Interfaces;
-using DiGi.Geometry.Planar;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.Geometry.Spatial.Classes;
 using DiGi.Geometry.Spatial.Interfaces;
@@ -59,9 +58,10 @@ namespace DiGi.Solar.Classes
         /// <para>For every receiver and sun direction, each triangle of the other elements (receivers and shading-only casters) is clipped to the part lying between the sun and the receiver plane,
         /// projected onto that plane along the sun direction, merged with the other shadows and clipped to the receiver face.</para>
         /// <para>Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).</para>
-        /// <para>If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun.</para>
-        /// <para>The result matches the ComputeSharp solver, except for a caster that crosses the receiver plane: here only its part on the sun side casts a shadow,
-        /// where the ComputeSharp solver decides per intersection piece from its centroid.</para>
+        /// <para>If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun.
+        /// The merge, clip and fallback are <see cref="Query.ShadedFaces(PolygonalFace2D?, IEnumerable{PolygonalFace2D}?)"/>, shared with the ComputeSharp solver.</para>
+        /// <para>Only the part of a caster on the sun side of the receiver plane casts a shadow, so a receiver with the sun behind it is shaded by whatever lies in front of its plane: a wall of a closed building then reads fully shaded.
+        /// The ComputeSharp solver computes the same clipped and projected shadows on the GPU, so the two solvers agree up to floating point round-off.</para>
         /// </summary>
         /// <returns>True if the solving operation completed successfully; otherwise, false.</returns>
         public virtual bool Solve()
@@ -336,31 +336,8 @@ namespace DiGi.Solar.Classes
                         }
                     }
 
-                    // A receiver reached by no shadow is fully sunlit and still gets a result (shaded area 0).
-                    List<PolygonalFace2D> polygonalFace2Ds_Result = [];
-                    if (polygonalFace2Ds_Shadow.Count != 0)
-                    {
-                        List<PolygonalFace2D>? polygonalFace2Ds_Union = polygonalFace2Ds_Shadow.Union();
-                        if (polygonalFace2Ds_Union != null)
-                        {
-                            foreach (PolygonalFace2D polygonalFace2D_Union in polygonalFace2Ds_Union)
-                            {
-                                List<PolygonalFace2D>? polygonalFace2Ds_Intersection = polygonalFace2D_Union.Intersection(polygonalFace2D);
-                                if (polygonalFace2Ds_Intersection != null)
-                                {
-                                    polygonalFace2Ds_Result.AddRange(polygonalFace2Ds_Intersection);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // The merge failed (it stays possible even after the snap-rounding retry DiGi.Geometry makes): keep the unmerged shadows clipped to the receiver and capped at its area, so a failed merge reads as shade, overstated at worst, and never as full sun. The receiver face is never null here, so the fallback is the shadow set or an empty one.
-                            if (Query.ShadowFaces(polygonalFace2D, polygonalFace2Ds_Shadow) is List<PolygonalFace2D> polygonalFace2Ds_Fallback)
-                            {
-                                polygonalFace2Ds_Result.AddRange(polygonalFace2Ds_Fallback);
-                            }
-                        }
-                    }
+                    // A receiver reached by no shadow is fully sunlit and still gets a result (shaded area 0). The receiver face is never null here.
+                    List<PolygonalFace2D> polygonalFace2Ds_Result = Query.ShadedFaces(polygonalFace2D, polygonalFace2Ds_Shadow) ?? [];
 
                     foreach (DateTime dateTime in tuple_DateTime.Item2)
                     {

@@ -1067,9 +1067,10 @@ For every receiver and sun direction, each triangle of the other elements (recei
 Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).
 
 If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun.
+            The merge, clip and fallback are [ShadedFaces\(this PolygonalFace2D, IEnumerable&lt;PolygonalFace2D&gt;\)](DiGi.Solar.md#DiGi.Solar.Query.ShadedFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_) 'DiGi\.Solar\.Query\.ShadedFaces\(this DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, System\.Collections\.Generic\.IEnumerable\<DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>\)'), shared with the ComputeSharp solver.
 
-The result matches the ComputeSharp solver, except for a caster that crosses the receiver plane: here only its part on the sun side casts a shadow,
-            where the ComputeSharp solver decides per intersection piece from its centroid.
+Only the part of a caster on the sun side of the receiver plane casts a shadow, so a receiver with the sun behind it is shaded by whatever lies in front of its plane: a wall of a closed building then reads fully shaded.
+            The ComputeSharp solver computes the same clipped and projected shadows on the GPU, so the two solvers agree up to floating point round-off.
 
 ```csharp
 public virtual bool Solve();

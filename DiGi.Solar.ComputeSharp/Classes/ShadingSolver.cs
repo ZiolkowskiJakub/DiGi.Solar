@@ -1,12 +1,12 @@
 using ComputeSharp;
 using DiGi.ComputeSharp.Spatial.Classes;
-using DiGi.Geometry.Planar;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.Geometry.Spatial;
 using DiGi.Geometry.Spatial.Classes;
 using DiGi.Geometry.Spatial.Interfaces;
 using DiGi.Solar.Classes;
 using DiGi.Solar.ComputeSharp.Enums;
+using DiGi.Solar.Enums;
 using DiGi.Solar.Interfaces;
 using System.Runtime.CompilerServices;
 
@@ -44,20 +44,27 @@ namespace DiGi.Solar.ComputeSharp.Classes
         public ComputeDeviceType ComputeDeviceType { get; set; } = ComputeDeviceType.Default;
 
         /// <summary>
-        /// Gets or sets the upper bound, in bytes, of each intersection buffer the solver allocates (the device buffer and its managed readback alike). Defaults to 256 MB.
-        /// <para>Receivers are dispatched in row blocks sized to fit the budget, so a smaller value lowers peak memory at the cost of more dispatches. A single row larger than the budget still runs (one row per block).</para>
+        /// Gets or sets the upper bound, in bytes, of the shadow record buffer the solver allocates (the device buffer and its managed readback alike). Defaults to 256 MB.
+        /// <para>The buffer holds only the shadows found (one <see cref="ShadowPolygon2"/> per receiver and caster triangle pair that casts one), so it grows with the hits, not with receivers x triangles; it starts small and grows up to this bound.
+        /// When the hits of one receiver block would exceed it, the block is split into fewer receivers, so a smaller value lowers peak memory at the cost of more dispatches.
+        /// A single receiver always runs, even when its hits exceed the bound (one receiver has at most one record per caster triangle).
+        /// The shadows kept for the union after the readback are not bounded by this value: they grow with the total number of hits.</para>
         /// </summary>
         public long MaxBufferBytes { get; set; } = 256L * 1024 * 1024;
 
         /// <summary>
-        /// Executes the shading calculation process, utilizing GPU shaders to determine intersections and project shading results onto objects.
+        /// Executes the shading calculation, clipping and projecting every caster triangle onto every receiver on the GPU and merging the resulting shadows on the CPU.
+        /// <para>For every receiver and sun direction, each triangle of the other elements (receivers and shading-only casters) is clipped to the part lying between the sun and the receiver plane and projected onto that plane along the sun direction
+        /// (<see cref="Triangle3ShadowProjectionComputeShader"/>, which appends only the shadows found); the shadows are then merged and clipped to the receiver face by <see cref="Solar.Query.ShadedFaces(PolygonalFace2D?, IEnumerable{PolygonalFace2D}?)"/>,
+        /// exactly as in the CPU solver, so the two solvers agree up to floating point round-off: a caster crossing the receiver plane casts only its sun-side part, and a receiver with the sun behind it is shaded by whatever lies in front of its plane.</para>
         /// <para>Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).</para>
-        /// <para>If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun. A sample with no receiver face to cap against gets no result at all, so TryGetShadingFactor returns false for it.</para>
-        /// <para>Receiver triangles are processed in row blocks sized by <see cref="MaxBufferBytes"/>, so memory no longer grows with the square of the triangle count. The results do not depend on the block size.</para>
+        /// <para>If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun.
+        /// A receiver without a plane frame or a planar face gets no results, so TryGetShadingFactor returns false for it; it still casts shadows on the others.</para>
+        /// <para>Receivers are dispatched in blocks whose shadows fit <see cref="MaxBufferBytes"/>; the shadows are sorted by receiver and caster triangle before the merge, so the results depend neither on the block size nor on the order the GPU appends them in.</para>
         /// <para>When no supported device matching <see cref="ComputeDeviceType"/> can be created (see <see cref="Create.GraphicsDevice(ComputeDeviceType)"/>), <see cref="ComputeDeviceType.Default"/> falls back to the CPU solve of the base class,
         /// while an explicit <see cref="ComputeDeviceType.Hardware"/> request returns false. The obsolete <c>ComputeDeviceType.Software</c> (WARP) never gets a device, so it always returns false (ZiolkowskiJakub/DiGi.Solar#10).</para>
         /// </summary>
-        /// <returns>True if the solving operation completed successfully; otherwise, false.</returns>
+        /// <returns>True if the solving operation completed successfully; otherwise, false, without assigning any result (also when the device reports more shadows for one receiver than it has caster triangles, which only a faulty dispatch can produce).</returns>
         public override bool Solve()
         {
             if (ShadingSolverOptions == null || ShadingModel == null)
@@ -85,25 +92,24 @@ namespace DiGi.Solar.ComputeSharp.Classes
 
             double tolerance = ShadingSolverOptions.Tolerance;
 
-            List<Tuple<Triangle3D, int>> tuples = [];
+            // One receiver row per non-shading-only element with a plane frame and a planar face; the row index is
+            // the receiver index the shader reports. The plane and the face are read from the same clone used to
+            // triangulate. A non-shading-only element without them gets no row: it receives nothing and, like a
+            // shading-only element, casts on every receiver.
             List<IShadingElement> shadingElements = [];
+            List<Geometry.Spatial.Classes.Plane> planes = [];
+            List<PolygonalFace2D> polygonalFace2Ds = [];
+            List<ShadowReceiver> shadowReceivers = [];
+            List<IShadingElement> shadingElements_NoRow = [];
 
-            // Captured in lockstep with shadingElements (non-shading-only) during triangulation
-            // below, so the per-element plane is read from the same clone used to triangulate
-            // rather than deep-cloning each PolygonalFace3D a second time later.
-            // The face is captured the same way: the shadow fallback clips and caps against it
-            // when the shadow union fails, and it is the only place the receiver's 2D face is needed.
-            List<Geometry.Spatial.Classes.Plane?> planes_ShadingElements = [];
-            List<PolygonalFace2D?> polygonalFace2Ds_ShadingElements = [];
+            // Caster triangles of every element and, built in the same loop so the two can never differ in length,
+            // the receiver row each belongs to (-1 when it has none), so a receiver never shades itself.
+            // The shader reads elementIndexes[y] for every triangle y, and D3D12 returns 0 for an out-of-bounds read.
+            List<Triangle3> triangle3s = [];
+            List<int> indexes_Row = [];
 
-            List<Tuple<Triangle3D, int>> tuples_ShadingOnly = [];
-            List<IShadingElement> shadingElements_ShadingOnly = [];
-
-            int count_ShadingElement_All = shadingElements_All.Count;
-
-            for (int i = 0; i < count_ShadingElement_All; i++)
+            foreach (IShadingElement shadingElement in shadingElements_All)
             {
-                IShadingElement shadingElement = shadingElements_All[i];
                 if (shadingElement == null)
                 {
                     continue;
@@ -117,101 +123,41 @@ namespace DiGi.Solar.ComputeSharp.Classes
                     continue;
                 }
 
-                List<IShadingElement> shadingElements_Temp;
-                List<Tuple<Triangle3D, int>> tuples_Temp;
-                if (shadingElement.ShadingOnly)
+                int index = -1;
+                if (!shadingElement.ShadingOnly)
                 {
-                    shadingElements_Temp = shadingElements_ShadingOnly;
-                    tuples_Temp = tuples_ShadingOnly;
+                    Geometry.Spatial.Classes.Plane? plane = polygonalFace3D?.Plane;
+                    if (plane != null && polygonalFace3D?.Geometry2D is PolygonalFace2D polygonalFace2D && DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(polygonalFace3D) is ShadowReceiver shadowReceiver)
+                    {
+                        index = shadowReceivers.Count;
+                        shadingElements.Add(shadingElement);
+                        planes.Add(plane);
+                        polygonalFace2Ds.Add(polygonalFace2D);
+                        shadowReceivers.Add(shadowReceiver);
+                    }
+                    else
+                    {
+                        shadingElements_NoRow.Add(shadingElement);
+                    }
                 }
-                else
-                {
-                    shadingElements_Temp = shadingElements;
-                    tuples_Temp = tuples;
-                    planes_ShadingElements.Add(polygonalFace3D?.Plane);
-                    polygonalFace2Ds_ShadingElements.Add(polygonalFace3D?.Geometry2D as PolygonalFace2D);
-                }
-
-                int index = shadingElements_Temp.Count;
-
-                shadingElements_Temp.Add(shadingElement);
 
                 foreach (Triangle3D triangle3D in triangle3Ds)
                 {
-                    tuples_Temp.Add(new Tuple<Triangle3D, int>(triangle3D, index));
+                    if (triangle3D == null)
+                    {
+                        continue;
+                    }
+
+                    triangle3s.Add(DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(triangle3D, true));
+                    indexes_Row.Add(index);
                 }
             }
 
-            int count_ShadingElement = shadingElements.Count;
-            int count_ShadingElement_ShadingOnly = shadingElements_ShadingOnly.Count;
-
-            if (count_ShadingElement == 0)
+            int count_Receiver = shadowReceivers.Count;
+            if (count_Receiver == 0 && shadingElements_NoRow.Count == 0)
             {
                 return true;
             }
-
-            int count_Triangle = tuples.Count;
-            int count_Triangle_ShadingOnly = tuples_ShadingOnly.Count;
-
-            // Receivers are processed in row blocks of blockSize triangles, one block of both passes at a time,
-            // so each intersection buffer holds blockSize x columns cells instead of the full N x N (or N x M)
-            // matrix. One block size drives both passes; the product stays within int by the clamp.
-            int columns = System.Math.Max(System.Math.Max(count_Triangle, count_Triangle_ShadingOnly), 1);
-            long rows = MaxBufferBytes / ((long)Unsafe.SizeOf<Triangle3Intersection>() * columns);
-            int blockSize = (int)System.Math.Clamp(rows, 1L, System.Math.Min((long)count_Triangle, int.MaxValue / columns));
-
-            using ReadOnlyBuffer<Triangle3> readOnlyBuffer = graphicDevice.AllocateReadOnlyBuffer(tuples.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
-            using ReadWriteBuffer<Triangle3Intersection> readWriteBuffer = graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(blockSize * count_Triangle);
-
-            using ReadOnlyBuffer<Triangle3>? readOnlyBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadOnlyBuffer(tuples_ShadingOnly.ConvertAll(x => DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(x.Item1, true)).ToArray());
-            using ReadWriteBuffer<Triangle3Intersection>? readWriteBuffer_ShadingOnly = tuples_ShadingOnly.Count == 0 ? null : graphicDevice.AllocateReadWriteBuffer<Triangle3Intersection>(blockSize * count_Triangle_ShadingOnly);
-
-            // Reusable CPU-side readback buffers. The GPU buffer sizes are constant across all
-            // blocks and directions, so allocate the managed arrays once and copy straight into
-            // them instead of allocating a new array per dispatch.
-            Triangle3Intersection[] triangle3Intersections_Readback = new Triangle3Intersection[blockSize * count_Triangle];
-            Triangle3Intersection[]? triangle3Intersections_Readback_ShadingOnly = count_Triangle_ShadingOnly == 0 ? null : new Triangle3Intersection[blockSize * count_Triangle_ShadingOnly];
-
-            // Reads back the first rowCount rows of a block and appends each receiver triangle's shadow
-            // triangles to triangle3DsArray[rowOffset + row]. Only rowCount x columnCount cells are read:
-            // a reused buffer keeps the previous block's results beyond that range.
-            Action<ReadWriteBuffer<Triangle3Intersection>, Triangle3Intersection[], int, int, int, List<Triangle3D>?[]> convert = new((readWriteBuffer_Temp, triangle3Intersections, rowOffset, rowCount, columnCount, triangle3DsArray) =>
-            {
-                readWriteBuffer_Temp.CopyTo(triangle3Intersections, 0, 0, rowCount * columnCount);
-
-                for (int i = 0; i < rowCount; i++)
-                {
-                    for (int j = 0; j < columnCount; j++)
-                    {
-                        // Reference the buffer element in place; Triangle3Intersection is a large
-                        // (6 x Coordinate3) struct and IsNaN() only reads Point_1, so copying the
-                        // whole struct per cell (most of which are NaN) would be pure overhead.
-                        ref Triangle3Intersection triangle3Intersection = ref triangle3Intersections[(i * columnCount) + j];
-                        if (triangle3Intersection.IsNaN())
-                        {
-                            continue;
-                        }
-
-                        DiGi.ComputeSharp.Spatial.Interfaces.IGeometry3[]? geometries = triangle3Intersection.GetIntersectionGeometries();
-                        if (geometries == null)
-                        {
-                            continue;
-                        }
-
-                        foreach (DiGi.ComputeSharp.Spatial.Interfaces.IGeometry3 geometry in geometries)
-                        {
-                            if (geometry is Triangle3 triangle3 && DiGi.ComputeSharp.Geometry.Spatial.Convert.ToDiGi(triangle3) is Triangle3D triangle3D)
-                            {
-                                (triangle3DsArray[rowOffset + i] ??= []).Add(triangle3D);
-                            }
-                        }
-                    }
-                }
-            });
-
-            List<List<IShadingSolverResult>?> shadingSolverResultsList = [.. Enumerable.Repeat<List<IShadingSolverResult>?>(null, count_ShadingElement)];
-
-            double angleTolerance = ShadingSolverOptions.AngleTolerance;
 
             Dictionary<DateTime, Vector3D> dictionary = [];
             foreach (DateTime dateTime in dateTimes)
@@ -225,124 +171,201 @@ namespace DiGi.Solar.ComputeSharp.Classes
                 dictionary[dateTime] = sunDirection;
             }
 
-            List<Tuple<Vector3D, List<DateTime>>>? tuples_DateTime = Solar.Query.GroupDirections(dictionary, angleTolerance);
+            List<Tuple<Vector3D, List<DateTime>>>? tuples_DateTime = Solar.Query.GroupDirections(dictionary, ShadingSolverOptions.AngleTolerance);
             if (tuples_DateTime == null || tuples_DateTime.Count == 0)
             {
                 return true;
             }
 
-            // Pre-compute the per-element triangle-index map once, outside the direction loop;
-            // it avoids scanning every triangle for every element on every direction (the
-            // triangle-to-element mapping never changes between directions). The element planes
-            // were already captured during triangulation in planes_ShadingElements.
-            List<int>[] triangleIndices_ByElement = new List<int>[count_ShadingElement];
-            for (int i = 0; i < count_ShadingElement; i++)
+            int count_Group = tuples_DateTime.Count;
+
+            // Shadows of every direction group, sorted by receiver row and then by caster triangle: row i owns
+            // shadowPolygon2sArray[g][offsetsArray[g][i] .. offsetsArray[g][i + 1]).
+            ShadowPolygon2[][] shadowPolygon2sArray = new ShadowPolygon2[count_Group][];
+            int[][] offsetsArray = new int[count_Group][];
+
+            if (count_Receiver != 0)
             {
-                triangleIndices_ByElement[i] = [];
-            }
+                int count_Triangle = triangle3s.Count;
 
-            for (int i = 0; i < count_Triangle; i++)
-            {
-                triangleIndices_ByElement[tuples[i].Item2].Add(i);
-            }
+                // A single receiver yields at most one record per caster triangle, so a block of one always fits.
+                int recordSize = Unsafe.SizeOf<ShadowPolygon2>();
+                int capacity_Max = (int)System.Math.Min(System.Math.Max(MaxBufferBytes / recordSize, count_Triangle), int.MaxValue / recordSize);
+                int capacity = System.Math.Min(capacity_Max, count_Receiver);
 
-            ParallelOptions parallelOptions = Core.Create.ParallelOptions();
+                using ReadOnlyBuffer<ShadowReceiver> readOnlyBuffer_Receivers = graphicDevice.AllocateReadOnlyBuffer(shadowReceivers.ToArray());
+                using ReadOnlyBuffer<Triangle3> readOnlyBuffer_Triangles = graphicDevice.AllocateReadOnlyBuffer(triangle3s.ToArray());
+                using ReadOnlyBuffer<int> readOnlyBuffer_Rows = graphicDevice.AllocateReadOnlyBuffer(indexes_Row.ToArray());
+                using ReadWriteBuffer<int> readWriteBuffer_Counter = graphicDevice.AllocateReadWriteBuffer<int>(1);
 
-            foreach (Tuple<Vector3D, List<DateTime>> tuple_DateTime in tuples_DateTime)
-            {
-                Coordinate3 coordinate3 = DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(tuple_DateTime.Item1);
+                // The counter is reset and read, and the records are read, through persistent staging buffers: a copy from or to a
+                // managed array stages through a transient resource on every call and costs several times more, which dominates small models.
+                using UploadBuffer<int> uploadBuffer_Counter = graphicDevice.AllocateUploadBuffer<int>(1);
+                using ReadBackBuffer<int> readBackBuffer_Counter = graphicDevice.AllocateReadBackBuffer<int>(1);
+                uploadBuffer_Counter.Span[0] = 0;
 
-                // Shadow triangles per receiver triangle, filled lazily: most receiver triangles are hit by nothing.
-                // Within each row the self-shading hits are appended before the shading-only hits, whatever the
-                // block size, so the union input (and therefore every result) does not depend on the tiling.
-                List<Triangle3D>?[] triangle3DsArray = new List<Triangle3D>?[count_Triangle];
+                ReadWriteBuffer<ShadowPolygon2> readWriteBuffer_Polygons = graphicDevice.AllocateReadWriteBuffer<ShadowPolygon2>(capacity);
+                ReadBackBuffer<ShadowPolygon2> readBackBuffer_Polygons = graphicDevice.AllocateReadBackBuffer<ShadowPolygon2>(capacity);
 
-                for (int rowOffset = 0; rowOffset < count_Triangle; rowOffset += blockSize)
+                try
                 {
-                    int rowCount = System.Math.Min(blockSize, count_Triangle - rowOffset);
-
-                    graphicDevice.For(rowCount, count_Triangle, new Triangle3ShadingRowOffsetComputeShader(readOnlyBuffer, readWriteBuffer, coordinate3, rowOffset, tolerance));
-                    convert(readWriteBuffer, triangle3Intersections_Readback, rowOffset, rowCount, count_Triangle, triangle3DsArray);
-
-                    if (readOnlyBuffer_ShadingOnly != null && readWriteBuffer_ShadingOnly != null && triangle3Intersections_Readback_ShadingOnly != null)
+                    for (int g = 0; g < count_Group; g++)
                     {
-                        graphicDevice.For(rowCount, count_Triangle_ShadingOnly, new Triangle3ExternalShadingRowOffsetComputeShader(readOnlyBuffer, readOnlyBuffer_ShadingOnly, readWriteBuffer_ShadingOnly, coordinate3, rowOffset, tolerance));
-                        convert(readWriteBuffer_ShadingOnly, triangle3Intersections_Readback_ShadingOnly, rowOffset, rowCount, count_Triangle_ShadingOnly, triangle3DsArray);
-                    }
-                }
+                        Coordinate3 coordinate3 = DiGi.ComputeSharp.Geometry.Spatial.Convert.ToComputeSharp(tuples_DateTime[g].Item1);
 
-                Parallel.For(0, count_ShadingElement, parallelOptions, i =>
-                {
-                    Geometry.Spatial.Classes.Plane? plane = planes_ShadingElements[i];
-                    if (plane == null)
-                    {
-                        return;
-                    }
+                        ShadowPolygon2[] shadowPolygon2s_Group = new ShadowPolygon2[capacity];
+                        int count_Group_Record = 0;
 
-                    PolygonalFace2D? polygonalFace2D_Receiver = polygonalFace2Ds_ShadingElements[i];
-
-                    List<Triangle3D> triangle3Ds = [];
-                    foreach (int j in triangleIndices_ByElement[i])
-                    {
-                        List<Triangle3D>? triangle3Ds_Temp = triangle3DsArray[j];
-                        if (triangle3Ds_Temp == null || triangle3Ds_Temp.Count == 0)
+                        int rowCount = count_Receiver;
+                        int rowOffset = 0;
+                        while (rowOffset < count_Receiver)
                         {
-                            continue;
-                        }
+                            rowCount = System.Math.Min(rowCount, count_Receiver - rowOffset);
 
-                        triangle3Ds.AddRange(triangle3Ds_Temp);
-                    }
+                            // The shader appends through the counter, so it must start at 0 on every dispatch, repeated ones included.
+                            readWriteBuffer_Counter.CopyFrom(uploadBuffer_Counter);
+                            graphicDevice.For(rowCount, count_Triangle, new Triangle3ShadowProjectionComputeShader(readOnlyBuffer_Receivers, readOnlyBuffer_Triangles, readOnlyBuffer_Rows, readWriteBuffer_Polygons, readWriteBuffer_Counter, coordinate3, rowOffset, tolerance));
+                            readWriteBuffer_Counter.CopyTo(readBackBuffer_Counter);
 
-                    // A receiver reached by no shadow triangle is fully sunlit: it still gets a
-                    // result (shaded area 0) so TryGetShadingFactor reports 0 instead of failing,
-                    // and interpolation never bridges a sunlit gap between two shaded samples.
-                    List<PolygonalFace2D>? polygonalFace2Ds = null;
-                    if (triangle3Ds.Count != 0)
-                    {
-                        List<PolygonalFace2D> polygonalFace2Ds_Shadow = [];
-                        foreach (Triangle3D triangle3D in triangle3Ds)
-                        {
-                            if (plane.Convert(triangle3D) is not Triangle2D triangle2D)
+                            // The counter ends at the true hit count even when the buffer overflowed, in which case the records are incomplete:
+                            // grow the buffer while the budget allows, otherwise split the block, and dispatch it again.
+                            int count = readBackBuffer_Counter.Span[0];
+                            if (count > capacity)
                             {
+                                if (count <= capacity_Max)
+                                {
+                                    capacity = (int)System.Math.Min(capacity_Max, System.Math.Max(count, 2L * capacity));
+
+                                    readWriteBuffer_Polygons.Dispose();
+                                    readWriteBuffer_Polygons = graphicDevice.AllocateReadWriteBuffer<ShadowPolygon2>(capacity);
+                                    readBackBuffer_Polygons.Dispose();
+                                    readBackBuffer_Polygons = graphicDevice.AllocateReadBackBuffer<ShadowPolygon2>(capacity);
+                                }
+                                else if (rowCount == 1)
+                                {
+                                    // One receiver yields at most one record per caster triangle, which capacity_Max always holds:
+                                    // a larger count is a broken counter, and splitting further would never end.
+                                    return false;
+                                }
+                                else
+                                {
+                                    rowCount = System.Math.Max(1, (int)((long)rowCount * capacity_Max / count));
+                                }
+
                                 continue;
                             }
 
-                            if (Geometry.Planar.Create.PolygonalFace2D(triangle2D) is PolygonalFace2D polygonalFace2D_Shadow)
+                            if (count != 0)
                             {
-                                polygonalFace2Ds_Shadow.Add(polygonalFace2D_Shadow);
+                                readWriteBuffer_Polygons.CopyTo(readBackBuffer_Polygons, 0, 0, count);
+
+                                if (count_Group_Record + count > shadowPolygon2s_Group.Length)
+                                {
+                                    Array.Resize(ref shadowPolygon2s_Group, System.Math.Max(count_Group_Record + count, 2 * shadowPolygon2s_Group.Length));
+                                }
+
+                                readBackBuffer_Polygons.Span[..count].CopyTo(shadowPolygon2s_Group.AsSpan(count_Group_Record));
+                                count_Group_Record += count;
+                            }
+
+                            rowOffset += rowCount;
+                        }
+
+                        // The append order is not deterministic: bucket by receiver row (counting sort), then order each
+                        // bucket by caster triangle, which is the CPU solver's order and makes the union input, and so every
+                        // result, independent of the block size and of the GPU.
+                        int[] offsets = new int[count_Receiver + 1];
+                        for (int k = 0; k < count_Group_Record; k++)
+                        {
+                            offsets[shadowPolygon2s_Group[k].ReceiverIndex + 1]++;
+                        }
+
+                        for (int i = 0; i < count_Receiver; i++)
+                        {
+                            offsets[i + 1] += offsets[i];
+                        }
+
+                        ShadowPolygon2[] shadowPolygon2s_Sorted = new ShadowPolygon2[count_Group_Record];
+                        int[] indexes_Triangle = new int[count_Group_Record];
+                        int[] positions = new int[count_Receiver];
+                        Array.Copy(offsets, positions, count_Receiver);
+                        for (int k = 0; k < count_Group_Record; k++)
+                        {
+                            ShadowPolygon2 shadowPolygon2 = shadowPolygon2s_Group[k];
+                            int position = positions[shadowPolygon2.ReceiverIndex]++;
+                            shadowPolygon2s_Sorted[position] = shadowPolygon2;
+                            indexes_Triangle[position] = shadowPolygon2.TriangleIndex;
+                        }
+
+                        for (int i = 0; i < count_Receiver; i++)
+                        {
+                            int length = offsets[i + 1] - offsets[i];
+                            if (length > 1)
+                            {
+                                Array.Sort(indexes_Triangle, shadowPolygon2s_Sorted, offsets[i], length);
                             }
                         }
 
-                        // Single hole-preserving union: produces PolygonalFace2D faces directly in one
-                        // NTS pass, replacing the previous Union (Polygon2D) + Create.PolygonalFace2Ds
-                        // re-polygonization. Unlike the Polygon2D union it keeps interior voids, so
-                        // ring-shaped shadows no longer over-count the shaded area.
-                        List<PolygonalFace2D>? polygonalFace2Ds_Union = polygonalFace2Ds_Shadow.Union();
-
-                        // The merge failed (it stays possible even after the snap-rounding retry DiGi.Geometry makes): keep the unmerged shadows clipped to the receiver and capped at its area, so a failed merge reads as shade, overstated at worst, and never as full sun. Without a receiver face there is nothing to cap against, so no result is emitted for the sample instead of a wrong one.
-                        polygonalFace2Ds = polygonalFace2Ds_Union ?? Solar.Query.ShadowFaces(polygonalFace2D_Receiver, polygonalFace2Ds_Shadow);
+                        shadowPolygon2sArray[g] = shadowPolygon2s_Sorted;
+                        offsetsArray[g] = offsets;
                     }
-
-                    polygonalFace2Ds ??= [];
-
-                    shadingSolverResultsList[i] ??= [];
-
-                    foreach (DateTime dateTime in tuple_DateTime.Item2)
-                    {
-                        if (Solar.Create.ShadingSolverResult(ShadingSolverOptions.ShadingSolverType, dateTime, plane, polygonalFace2Ds) is IShadingSolverResult shadingSolverResult)
-                        {
-                            shadingSolverResultsList[i]!.Add(shadingSolverResult);
-                        }
-                    }
-                });
+                }
+                finally
+                {
+                    readWriteBuffer_Polygons.Dispose();
+                    readBackBuffer_Polygons.Dispose();
+                }
             }
 
-            // Every receiver with a plane now carries a result list for each direction group it was
-            // solved in, so Assign receives null only for elements without a plane; elements that
-            // failed triangulation never entered shadingElements.
-            for (int i = 0; i < count_ShadingElement; i++)
+            ShadingSolverType shadingSolverType = ShadingSolverOptions.ShadingSolverType;
+
+            List<IShadingSolverResult>?[] shadingSolverResultsArray = new List<IShadingSolverResult>?[count_Receiver];
+
+            Parallel.For(0, count_Receiver, Core.Create.ParallelOptions(), i =>
             {
-                ShadingModel.Assign(shadingElements[i], shadingSolverResultsList[i]);
+                Geometry.Spatial.Classes.Plane plane = planes[i];
+                PolygonalFace2D polygonalFace2D = polygonalFace2Ds[i];
+
+                List<IShadingSolverResult> shadingSolverResults = [];
+
+                for (int g = 0; g < count_Group; g++)
+                {
+                    ShadowPolygon2[] shadowPolygon2s = shadowPolygon2sArray[g];
+                    int[] offsets = offsetsArray[g];
+
+                    List<PolygonalFace2D> polygonalFace2Ds_Shadow = [];
+                    for (int k = offsets[i]; k < offsets[i + 1]; k++)
+                    {
+                        if (DiGi.ComputeSharp.Geometry.Planar.Convert.ToDiGi(shadowPolygon2s[k]) is PolygonalFace2D polygonalFace2D_Shadow)
+                        {
+                            polygonalFace2Ds_Shadow.Add(polygonalFace2D_Shadow);
+                        }
+                    }
+
+                    // A receiver reached by no shadow is fully sunlit and still gets a result (shaded area 0). The receiver face is never null here.
+                    List<PolygonalFace2D> polygonalFace2Ds_Result = Solar.Query.ShadedFaces(polygonalFace2D, polygonalFace2Ds_Shadow) ?? [];
+
+                    foreach (DateTime dateTime in tuples_DateTime[g].Item2)
+                    {
+                        if (Solar.Create.ShadingSolverResult(shadingSolverType, dateTime, plane, polygonalFace2Ds_Result) is IShadingSolverResult shadingSolverResult)
+                        {
+                            shadingSolverResults.Add(shadingSolverResult);
+                        }
+                    }
+                }
+
+                shadingSolverResultsArray[i] = shadingSolverResults;
+            });
+
+            for (int i = 0; i < count_Receiver; i++)
+            {
+                ShadingModel.Assign(shadingElements[i], shadingSolverResultsArray[i]);
+            }
+
+            // Receivers without a plane frame or a planar face get null, so Assign returns false for them, as in the CPU solver.
+            foreach (IShadingElement shadingElement in shadingElements_NoRow)
+            {
+                ShadingModel.Assign(shadingElement, null);
             }
 
             return true;
