@@ -1067,7 +1067,8 @@ For every receiver and sun direction, each triangle of the other elements (recei
 Every receiver receives one result per daytime timestamp, including fully sunlit ones (shaded area 0).
 
 If the merge of one receiver's shadows fails, the unmerged shadows are clipped to the receiver and used instead, capped at its area: that sample's shaded area is then overstated at worst, but it never exceeds the receiver and never reads as full sun.
-            The merge, clip and fallback are [ShadedFaces\(this PolygonalFace2D, IEnumerable&lt;PolygonalFace2D&gt;\)](DiGi.Solar.md#DiGi.Solar.Query.ShadedFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_) 'DiGi\.Solar\.Query\.ShadedFaces\(this DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, System\.Collections\.Generic\.IEnumerable\<DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>\)'), shared with the ComputeSharp solver.
+            The clip and projection are [ProjectedShadowFaces\(this Plane, BoundingBox2D, double\[\], int\[\], int, Vector3D, double\)](DiGi.Solar.md#DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double) 'DiGi\.Solar\.Query\.ProjectedShadowFaces\(this DiGi\.Geometry\.Spatial\.Classes\.Plane, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double\[\], int\[\], int, DiGi\.Geometry\.Spatial\.Classes\.Vector3D, double\)'), shared with [ViewFactorResults\(this ShadingModel, IDictionary&lt;string,Vector3D&gt;, double, int, int\)](DiGi.Solar.md#DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int) 'DiGi\.Solar\.Create\.ViewFactorResults\(this DiGi\.Solar\.Classes\.ShadingModel, System\.Collections\.Generic\.IDictionary\<string,DiGi\.Geometry\.Spatial\.Classes\.Vector3D\>, double, int, int\)');
+            the merge, clip and fallback are [ShadedFaces\(this PolygonalFace2D, IEnumerable&lt;PolygonalFace2D&gt;\)](DiGi.Solar.md#DiGi.Solar.Query.ShadedFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_) 'DiGi\.Solar\.Query\.ShadedFaces\(this DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, System\.Collections\.Generic\.IEnumerable\<DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>\)'), shared with the ComputeSharp solver.
 
 Only the part of a caster on the sun side of the receiver plane casts a shadow, so a receiver with the sun behind it is shaded by whatever lies in front of its plane: a wall of a closed building then reads fully shaded.
             The ComputeSharp solver computes the same clipped and projected shadows on the GPU, so the two solvers agree up to floating point round-off.
@@ -1537,6 +1538,128 @@ Gets the area of the surface in direct sunlight, in m2\. Never greater than [Tot
 
 ```csharp
 public double UnshadedArea { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.ViewFactorResult'></a>
+
+## ViewFactorResult Class
+
+Represents how much of the sky and of the ground a receiver of a shading model can see past the geometry around it \(its own building and the shading\-only neighbours\)\.
+
+Both values are the unblocked share of the isotropic view factor: 1 is an open view (the view factors `(1 + cos tilt) / 2` and `(1 - cos tilt) / 2` of [IrradianceResult\(this Vector3D, Vector3D, double, double, double, double\)](DiGi.Solar.md#DiGi.Solar.Create.IrradianceResult(thisDiGi.Geometry.Spatial.Classes.Vector3D,DiGi.Geometry.Spatial.Classes.Vector3D,double,double,double,double) 'DiGi\.Solar\.Create\.IrradianceResult\(this DiGi\.Geometry\.Spatial\.Classes\.Vector3D, DiGi\.Geometry\.Spatial\.Classes\.Vector3D, double, double, double, double\)') apply in full), 0 is a fully blocked view. Scale the sky diffuse component by [SkyVisibility](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ViewFactorResult.SkyVisibility 'DiGi\.Solar\.Classes\.ViewFactorResult\.SkyVisibility') and the ground-reflected component by [GroundVisibility](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ViewFactorResult.GroundVisibility 'DiGi\.Solar\.Classes\.ViewFactorResult\.GroundVisibility').
+
+Instances are plain carriers of already-computed values. Use [ViewFactorResults\(this ShadingModel, IDictionary&lt;string,Vector3D&gt;, double, int, int\)](DiGi.Solar.md#DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int) 'DiGi\.Solar\.Create\.ViewFactorResults\(this DiGi\.Solar\.Classes\.ShadingModel, System\.Collections\.Generic\.IDictionary\<string,DiGi\.Geometry\.Spatial\.Classes\.Vector3D\>, double, int, int\)') to calculate them.
+
+```csharp
+public class ViewFactorResult : DiGi.Core.Classes.SerializableResult, DiGi.Solar.Interfaces.ISolarSerializableObject, DiGi.Solar.Interfaces.ISolarObject, DiGi.Core.Interfaces.IObject, DiGi.Core.Interfaces.ISerializableObject, DiGi.Core.Interfaces.ICloneableObject<DiGi.Core.Interfaces.ISerializableObject>, DiGi.Core.Interfaces.ICloneableObject
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.Core\.Classes\.SerializableResult](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableresult 'DiGi\.Core\.Classes\.SerializableResult') → ViewFactorResult
+
+Implements [ISolarSerializableObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarSerializableObject 'DiGi\.Solar\.Interfaces\.ISolarSerializableObject'), [ISolarObject](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.ISolarObject 'DiGi\.Solar\.Interfaces\.ISolarObject'), [DiGi\.Core\.Interfaces\.IObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iobject 'DiGi\.Core\.Interfaces\.IObject'), [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject'), [DiGi\.Core\.Interfaces\.ICloneableObject&lt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1')[DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject-1 'DiGi\.Core\.Interfaces\.ICloneableObject\`1'), [DiGi\.Core\.Interfaces\.ICloneableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.icloneableobject 'DiGi\.Core\.Interfaces\.ICloneableObject')
+### Constructors
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.ViewFactorResult(DiGi.Solar.Classes.ViewFactorResult)'></a>
+
+## ViewFactorResult\(ViewFactorResult\) Constructor
+
+Initializes a new instance of the [ViewFactorResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ViewFactorResult 'DiGi\.Solar\.Classes\.ViewFactorResult') class by copying an existing instance\.
+
+```csharp
+public ViewFactorResult(DiGi.Solar.Classes.ViewFactorResult? viewFactorResult);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.ViewFactorResult(DiGi.Solar.Classes.ViewFactorResult).viewFactorResult'></a>
+
+`viewFactorResult` [ViewFactorResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ViewFactorResult 'DiGi\.Solar\.Classes\.ViewFactorResult')
+
+The source [ViewFactorResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ViewFactorResult 'DiGi\.Solar\.Classes\.ViewFactorResult') to copy from\.
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.ViewFactorResult(string,double,double)'></a>
+
+## ViewFactorResult\(string, double, double\) Constructor
+
+Initializes a new instance of the [ViewFactorResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ViewFactorResult 'DiGi\.Solar\.Classes\.ViewFactorResult') class from already\-computed visibilities\.
+
+```csharp
+public ViewFactorResult(string? reference, double skyVisibility, double groundVisibility);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.ViewFactorResult(string,double,double).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The reference of the receiving shading element\.
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.ViewFactorResult(string,double,double).skyVisibility'></a>
+
+`skyVisibility` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The unblocked share of the receiver's isotropic sky view factor, from 0 \(blocked\) to 1 \(open\)\.
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.ViewFactorResult(string,double,double).groundVisibility'></a>
+
+`groundVisibility` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The unblocked share of the receiver's isotropic ground view factor, from 0 \(blocked\) to 1 \(open\)\.
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.ViewFactorResult(System.Text.Json.Nodes.JsonObject)'></a>
+
+## ViewFactorResult\(JsonObject\) Constructor
+
+Initializes a new instance of the [ViewFactorResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ViewFactorResult 'DiGi\.Solar\.Classes\.ViewFactorResult') class from a JSON object\.
+
+```csharp
+public ViewFactorResult(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.ViewFactorResult(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the view factor data\.
+### Properties
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.GroundVisibility'></a>
+
+## ViewFactorResult\.GroundVisibility Property
+
+Gets the unblocked share of the receiver's isotropic ground view factor, from 0 \(blocked\) to 1 \(open\)\.
+
+```csharp
+public double GroundVisibility { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.Reference'></a>
+
+## ViewFactorResult\.Reference Property
+
+Gets the reference of the receiving shading element \([Reference](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingElement.Reference 'DiGi\.Solar\.Interfaces\.IShadingElement\.Reference')\)\.
+
+```csharp
+public string? Reference { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.Solar.Classes.ViewFactorResult.SkyVisibility'></a>
+
+## ViewFactorResult\.SkyVisibility Property
+
+Gets the unblocked share of the receiver's isotropic sky view factor, from 0 \(blocked\) to 1 \(open\)\.
+
+```csharp
+public double SkyVisibility { get; }
 ```
 
 #### Property Value

@@ -182,6 +182,58 @@ The shaded fraction of the surface, between 0 for fully lit and 1 for fully shad
 [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult')  
 A [SolarPowerResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.SolarPowerResult 'DiGi\.Solar\.Classes\.SolarPowerResult'), or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') if the irradiance result is null, the total area is not a number or negative, or the shading factor is not a number or lies outside the range 0 to 1\.
 
+<a name='DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int)'></a>
+
+## Create\.ViewFactorResults\(this ShadingModel, IDictionary\<string,Vector3D\>, double, int, int\) Method
+
+Calculates, for every receiver of a shading model, how much of its sky and of its ground it can see past the other elements \(receivers and shading\-only casters\)\.
+
+Each hemisphere is split into [altitudeCount](DiGi.Solar.md#DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int).altitudeCount 'DiGi\.Solar\.Create\.ViewFactorResults\(this DiGi\.Solar\.Classes\.ShadingModel, System\.Collections\.Generic\.IDictionary\<string,DiGi\.Geometry\.Spatial\.Classes\.Vector3D\>, double, int, int\)\.altitudeCount') equal altitude bands times [azimuthCount](DiGi.Solar.md#DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int).azimuthCount 'DiGi\.Solar\.Create\.ViewFactorResults\(this DiGi\.Solar\.Classes\.ShadingModel, System\.Collections\.Generic\.IDictionary\<string,DiGi\.Geometry\.Spatial\.Classes\.Vector3D\>, double, int, int\)\.azimuthCount') azimuth sectors, and every patch is sampled at its centre direction `p`. A patch in front of the receiver (`cos θ = n · p > 0` for the outward normal `n`) is weighted by `cos θ · ΔΩ`, the weight an isotropic sky or ground gives it. Its blocked fraction is the shaded share of the receiver lit along `-p`: [ProjectedShadowFaces\(this Plane, BoundingBox2D, double\[\], int\[\], int, Vector3D, double\)](DiGi.Solar.md#DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double) 'DiGi\.Solar\.Query\.ProjectedShadowFaces\(this DiGi\.Geometry\.Spatial\.Classes\.Plane, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double\[\], int\[\], int, DiGi\.Geometry\.Spatial\.Classes\.Vector3D, double\)') merged and clipped by [ShadedFaces\(this PolygonalFace2D, IEnumerable&lt;PolygonalFace2D&gt;\)](DiGi.Solar.md#DiGi.Solar.Query.ShadedFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_) 'DiGi\.Solar\.Query\.ShadedFaces\(this DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, System\.Collections\.Generic\.IEnumerable\<DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>\)'), the same projection the [ShadingSolver](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver 'DiGi\.Solar\.Classes\.ShadingSolver') uses for the sun (EnergyPlus computes its isotropic diffuse shading ratio the same way).
+            The visibility is the weighted unblocked share, `Σ w (1 - f) / Σ w`, and is exactly 1 when nothing blocks the view, so an open surface keeps the open-sky irradiance bit for bit. A hemisphere with no patch in front of the receiver (the ground of a flat roof) has visibility 1.
+
+Ground patches use every caster, floor slabs included. A ground ray reaches a floor slab of a closed building only by passing its walls or roof, or by starting on its boundary: a wall touching a neighbour sees the neighbour's floor, not the ground. The ground itself is not modelled, so nothing below the lowest caster blocks.
+
+A blocked patch contributes nothing: light reflected by the facades and roofs that block the view is ignored. That is exact for a wall touching a neighbour, but underestimates surfaces in narrow street canyons and courtyards (ZiolkowskiJakub/DiGi.Solar#15).
+
+```csharp
+public static System.Collections.Generic.List<DiGi.Solar.Classes.ViewFactorResult>? ViewFactorResults(this DiGi.Solar.Classes.ShadingModel? shadingModel, System.Collections.Generic.IDictionary<string,DiGi.Geometry.Spatial.Classes.Vector3D>? normals, double tolerance, int altitudeCount=6, int azimuthCount=24);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int).shadingModel'></a>
+
+`shadingModel` [ShadingModel](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel 'DiGi\.Solar\.Classes\.ShadingModel')
+
+The shading model\. This value can be null\.
+
+<a name='DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int).normals'></a>
+
+`normals` [System\.Collections\.Generic\.IDictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.idictionary-2 'System\.Collections\.Generic\.IDictionary\`2')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.idictionary-2 'System\.Collections\.Generic\.IDictionary\`2')[DiGi\.Geometry\.Spatial\.Classes\.Vector3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.vector3d 'DiGi\.Geometry\.Spatial\.Classes\.Vector3D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.idictionary-2 'System\.Collections\.Generic\.IDictionary\`2')
+
+The outward unit normal of each receiver, keyed by its reference\. A receiver missing from it, or null, uses its plane normal, which is the outward one only if the face is stored that way\.
+
+<a name='DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance\.
+
+<a name='DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int).altitudeCount'></a>
+
+`altitudeCount` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of altitude bands per hemisphere\.
+
+<a name='DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int).azimuthCount'></a>
+
+`azimuthCount` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of azimuth sectors per altitude band\.
+
+#### Returns
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[ViewFactorResult](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ViewFactorResult 'DiGi\.Solar\.Classes\.ViewFactorResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
+One result per receiver that has a plane, a face with area and a triangulation, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when [shadingModel](DiGi.Solar.md#DiGi.Solar.Create.ViewFactorResults(thisDiGi.Solar.Classes.ShadingModel,System.Collections.Generic.IDictionary_string,DiGi.Geometry.Spatial.Classes.Vector3D_,double,int,int).shadingModel 'DiGi\.Solar\.Create\.ViewFactorResults\(this DiGi\.Solar\.Classes\.ShadingModel, System\.Collections\.Generic\.IDictionary\<string,DiGi\.Geometry\.Spatial\.Classes\.Vector3D\>, double, int, int\)\.shadingModel') is null or a patch count is below 1\.
+
 <a name='DiGi.Solar.Query'></a>
 
 ## Query Class
@@ -253,6 +305,67 @@ The maximum angle difference allowed to group two directions together\.
 [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Tuple&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.tuple-2 'System\.Tuple\`2')[DiGi\.Geometry\.Spatial\.Classes\.Vector3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.vector3d 'DiGi\.Geometry\.Spatial\.Classes\.Vector3D')[,](https://learn.microsoft.com/en-us/dotnet/api/system.tuple-2 'System\.Tuple\`2')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.tuple-2 'System\.Tuple\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
 A list of tuples, where each tuple contains a representative [DiGi\.Geometry\.Spatial\.Classes\.Vector3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.vector3d 'DiGi\.Geometry\.Spatial\.Classes\.Vector3D') and a list of [System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime') values associated with that direction; returns [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') if the input dictionary is null\.
 
+<a name='DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double)'></a>
+
+## Query\.ProjectedShadowFaces\(this Plane, BoundingBox2D, double\[\], int\[\], int, Vector3D, double\) Method
+
+Computes the unmerged shadows that caster triangles throw onto a receiver plane along one propagation direction\.
+
+Each triangle is clipped to the part lying upstream of the receiver plane (between the light source and the plane), projected onto the plane along [direction](DiGi.Solar.md#DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).direction 'DiGi\.Solar\.Query\.ProjectedShadowFaces\(this DiGi\.Geometry\.Spatial\.Classes\.Plane, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double\[\], int\[\], int, DiGi\.Geometry\.Spatial\.Classes\.Vector3D, double\)\.direction') and expressed in the plane's coordinates. Triangles whose projection misses the receiver's bounding box, and slivers with no area, are dropped.
+
+This is the per-direction step of [Solve\(\)](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver.Solve() 'DiGi\.Solar\.Classes\.ShadingSolver\.Solve\(\)'); merge and clip the result with [ShadedFaces\(this PolygonalFace2D, IEnumerable&lt;PolygonalFace2D&gt;\)](DiGi.Solar.md#DiGi.Solar.Query.ShadedFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_) 'DiGi\.Solar\.Query\.ShadedFaces\(this DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, System\.Collections\.Generic\.IEnumerable\<DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>\)'). A direction grazing the plane (its dot product with the plane normal within [tolerance](DiGi.Solar.md#DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).tolerance 'DiGi\.Solar\.Query\.ProjectedShadowFaces\(this DiGi\.Geometry\.Spatial\.Classes\.Plane, DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D, double\[\], int\[\], int, DiGi\.Geometry\.Spatial\.Classes\.Vector3D, double\)\.tolerance')) casts no shadow.
+
+```csharp
+public static System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.PolygonalFace2D> ProjectedShadowFaces(this DiGi.Geometry.Spatial.Classes.Plane? plane, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D, double[]? coordinates, int[]? indexes, int index, DiGi.Geometry.Spatial.Classes.Vector3D? direction, double tolerance);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).plane'></a>
+
+`plane` [DiGi\.Geometry\.Spatial\.Classes\.Plane](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.plane 'DiGi\.Geometry\.Spatial\.Classes\.Plane')
+
+The receiver plane\. This value can be null\.
+
+<a name='DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The bounding box of the receiver face in the plane's coordinates\. This value can be null\.
+
+<a name='DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).coordinates'></a>
+
+`coordinates` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The caster triangles, 9 coordinates \(3 points x, y, z\) per triangle\.
+
+<a name='DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).indexes'></a>
+
+`indexes` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The index of the element each triangle belongs to, one per triangle\.
+
+<a name='DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).index'></a>
+
+`index` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The index of the receiver; its own triangles \(equal index\) are skipped, so a receiver never shades itself\. Use \-1 to skip none\.
+
+<a name='DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).direction'></a>
+
+`direction` [DiGi\.Geometry\.Spatial\.Classes\.Vector3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.vector3d 'DiGi\.Geometry\.Spatial\.Classes\.Vector3D')
+
+The propagation direction of the light, pointing away from its source\. Need not be unit length\.
+
+<a name='DiGi.Solar.Query.ProjectedShadowFaces(thisDiGi.Geometry.Spatial.Classes.Plane,DiGi.Geometry.Planar.Classes.BoundingBox2D,double[],int[],int,DiGi.Geometry.Spatial.Classes.Vector3D,double).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance tolerance\.
+
+#### Returns
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')  
+The shadow faces in the receiver plane's coordinates, empty when no shadow reaches the receiver or an input is null\.
+
 <a name='DiGi.Solar.Query.ShadedFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_)'></a>
 
 ## Query\.ShadedFaces\(this PolygonalFace2D, IEnumerable\<PolygonalFace2D\>\) Method
@@ -262,6 +375,7 @@ Builds the shaded part of a receiver from its shadow faces: the shadows are merg
 This is the post-processing both shading solvers share, so the CPU [ShadingSolver](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolver 'DiGi\.Solar\.Classes\.ShadingSolver') and the ComputeSharp solver cannot drift apart after the shadows are computed.
 
 If the merge fails (`DiGi.Geometry.Planar.Query.Union` returns `null` even after its snap-rounding retry), the unmerged shadows are clipped to the receiver and capped at its area instead ([ShadowFaces\(this PolygonalFace2D, IEnumerable&lt;PolygonalFace2D&gt;\)](DiGi.Solar.md#DiGi.Solar.Query.ShadowFaces(thisDiGi.Geometry.Planar.Classes.PolygonalFace2D,System.Collections.Generic.IEnumerable_DiGi.Geometry.Planar.Classes.PolygonalFace2D_) 'DiGi\.Solar\.Query\.ShadowFaces\(this DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D, System\.Collections\.Generic\.IEnumerable\<DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D\>\)')): a failed merge reads as shade, overstated at worst, and never as full sun.
+            The same fallback applies when clipping a merged face to the receiver fails (`DiGi.Geometry.Planar.Query.Intersection` returns `null`), which a union face with zero-area sliver holes has caused (ZiolkowskiJakub/DiGi.Solar#16).
 
 ```csharp
 public static System.Collections.Generic.List<DiGi.Geometry.Planar.Classes.PolygonalFace2D>? ShadedFaces(this DiGi.Geometry.Planar.Classes.PolygonalFace2D? polygonalFace2D_Receiver, System.Collections.Generic.IEnumerable<DiGi.Geometry.Planar.Classes.PolygonalFace2D>? polygonalFace2Ds_Shadow);
