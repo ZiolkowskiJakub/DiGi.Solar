@@ -162,6 +162,7 @@ namespace DiGi.Solar.Classes
         /// Attempts to calculate the shading factor for a specific element at a given date and time.
         /// <para>Results exist only for timestamps where the sun is above the horizon (Query.SunDirection with includeNight: false). A false return for a night timestamp means "no beam component", not "unknown"; callers computing irradiance treat it as beam = 0.</para>
         /// <para>For a daytime timestamp of a solved receiver, a false return means the element was not solved (no plane or no triangulation).</para>
+        /// <para>This is a per-call lookup: every call re-clones the receiver face, re-resolves the result relation and re-reads every stored result of the receiver. Consumers that read many timestamps of one receiver should use <see cref="TryGetShadingFactors(IShadingElement, out Dictionary{DateTime, double}?)"/> instead.</para>
         /// </summary>
         /// <param name="shadingElement">The shading element to evaluate.</param>
         /// <param name="dateTime">The date and time of evaluation.</param>
@@ -195,7 +196,7 @@ namespace DiGi.Solar.Classes
                 return true;
             }
 
-            ShadingSolverResultRelation? shadingSolverResultRelation = shadingRelationCluster.GetRelation<ShadingSolverResultRelation>(Core.Create.UniqueReference(shadingElement));
+            ShadingSolverResultRelation? shadingSolverResultRelation = shadingRelationCluster.GetShadingSolverResultRelation(shadingElement);
             if (shadingSolverResultRelation is null)
             {
                 return false;
@@ -271,6 +272,89 @@ namespace DiGi.Solar.Classes
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Reads out the shaded fraction (0-1) of every stored timestamp of a receiver in one non-cloning pass.
+        /// <para>The bulk counterpart of <see cref="TryGetShadingFactor(IShadingElement, DateTime, out double, bool)"/>: it resolves the result relation once, computes the face area once and reads the <see cref="IShadingSolverResult.Area"/> of every stored result exactly once, so no result is cloned and no per-timestamp work is repeated. It does not cache: the returned dictionary is built on every call and holds primitives only.</para>
+        /// <para>The dictionary is the exact-match view: one entry per stored result with a non-NaN area, no interpolation. Callers that need interpolation interpolate over the returned dictionary. For a single timestamp use <see cref="TryGetShadingFactor(IShadingElement, DateTime, out double, bool)"/>.</para>
+        /// <para>The contract edges mirror the per-call method: a null element, a shading-only element, a null face or a NaN face area return false. A zero face area returns true with 0.0 for every stored timestamp (an empty dictionary when the element was never solved: the per-call method answers 0 for any timestamp, the bulk method only enumerates stored timestamps). A receiver without a result relation or with no results returns false.</para>
+        /// </summary>
+        /// <param name="shadingElement">The receiver whose stored results are read.</param>
+        /// <param name="factors">The shaded fraction of the receiver at each of its stored timestamps when this method returns true; null when it returns false.</param>
+        /// <returns>True when the receiver has a face with a finite area and its stored results were read (including the zero-area case); false otherwise.</returns>
+        public bool TryGetShadingFactors(IShadingElement shadingElement, out Dictionary<DateTime, double>? factors)
+        {
+            factors = null;
+
+            if (shadingElement is null || shadingElement.ShadingOnly)
+            {
+                return false;
+            }
+
+            IPolygonalFace3D? polygonalFace3D = shadingElement.PolygonalFace3D;
+            if (polygonalFace3D is null)
+            {
+                return false;
+            }
+
+            double area = polygonalFace3D.GetArea();
+            if (double.IsNaN(area))
+            {
+                return false;
+            }
+
+            // Resolves the relation once; the returned results are the live objects, never clones.
+            List<IShadingSolverResult>? ShadingSolverResults()
+            {
+                ShadingSolverResultRelation? shadingSolverResultRelation = shadingRelationCluster.GetShadingSolverResultRelation(shadingElement);
+                if (shadingSolverResultRelation is null)
+                {
+                    return null;
+                }
+
+                return shadingRelationCluster.GetShadingSolverResults<IShadingSolverResult>(shadingSolverResultRelation);
+            }
+
+            if (area == 0)
+            {
+                // A zero-area receiver is fully shaded at every stored timestamp, mirroring the per-call contract.
+                // An unsolved zero-area element yields the empty dictionary: the per-call method answers 0 for any
+                // timestamp, but the bulk method only enumerates the timestamps the solver stored.
+                Dictionary<DateTime, double> factors_ZeroArea = [];
+                List<IShadingSolverResult>? shadingSolverResults_ZeroArea = ShadingSolverResults();
+                if (shadingSolverResults_ZeroArea is not null)
+                {
+                    foreach (IShadingSolverResult shadingSolverResult_ZeroArea in shadingSolverResults_ZeroArea)
+                    {
+                        factors_ZeroArea[shadingSolverResult_ZeroArea.DateTime] = 0.0;
+                    }
+                }
+
+                factors = factors_ZeroArea;
+                return true;
+            }
+
+            List<IShadingSolverResult>? shadingSolverResults = ShadingSolverResults();
+            if (shadingSolverResults is null || shadingSolverResults.Count == 0)
+            {
+                return false;
+            }
+
+            Dictionary<DateTime, double> factors_Temp = [];
+            foreach (IShadingSolverResult shadingSolverResult in shadingSolverResults)
+            {
+                double area_Temp = shadingSolverResult.Area;
+                if (double.IsNaN(area_Temp))
+                {
+                    continue;
+                }
+
+                factors_Temp[shadingSolverResult.DateTime] = area_Temp / area;
+            }
+
+            factors = factors_Temp;
+            return true;
         }
 
         /// <summary>

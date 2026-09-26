@@ -773,6 +773,8 @@ Results exist only for timestamps where the sun is above the horizon (Query.SunD
 
 For a daytime timestamp of a solved receiver, a false return means the element was not solved (no plane or no triangulation).
 
+This is a per-call lookup: every call re-clones the receiver face, re-resolves the result relation and re-reads every stored result of the receiver. Consumers that read many timestamps of one receiver should use [TryGetShadingFactors\(IShadingElement, Dictionary&lt;DateTime,double&gt;\)](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel.TryGetShadingFactors(DiGi.Solar.Interfaces.IShadingElement,System.Collections.Generic.Dictionary_System.DateTime,double_) 'DiGi\.Solar\.Classes\.ShadingModel\.TryGetShadingFactors\(DiGi\.Solar\.Interfaces\.IShadingElement, System\.Collections\.Generic\.Dictionary\<System\.DateTime,double\>\)') instead.
+
 ```csharp
 public bool TryGetShadingFactor(DiGi.Solar.Interfaces.IShadingElement shadingElement, System.DateTime dateTime, out double factor, bool interpolation=true);
 ```
@@ -805,6 +807,39 @@ Whether to interpolate between known results if an exact match for the date and 
 #### Returns
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
 True if a shading factor was successfully determined; otherwise, false\.
+
+<a name='DiGi.Solar.Classes.ShadingModel.TryGetShadingFactors(DiGi.Solar.Interfaces.IShadingElement,System.Collections.Generic.Dictionary_System.DateTime,double_)'></a>
+
+## ShadingModel\.TryGetShadingFactors\(IShadingElement, Dictionary\<DateTime,double\>\) Method
+
+Reads out the shaded fraction \(0\-1\) of every stored timestamp of a receiver in one non\-cloning pass\.
+
+The bulk counterpart of [TryGetShadingFactor\(IShadingElement, DateTime, double, bool\)](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel.TryGetShadingFactor(DiGi.Solar.Interfaces.IShadingElement,System.DateTime,double,bool) 'DiGi\.Solar\.Classes\.ShadingModel\.TryGetShadingFactor\(DiGi\.Solar\.Interfaces\.IShadingElement, System\.DateTime, double, bool\)'): it resolves the result relation once, computes the face area once and reads the [Area](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingSolverResult.Area 'DiGi\.Solar\.Interfaces\.IShadingSolverResult\.Area') of every stored result exactly once, so no result is cloned and no per-timestamp work is repeated. It does not cache: the returned dictionary is built on every call and holds primitives only.
+
+The dictionary is the exact-match view: one entry per stored result with a non-NaN area, no interpolation. Callers that need interpolation interpolate over the returned dictionary. For a single timestamp use [TryGetShadingFactor\(IShadingElement, DateTime, double, bool\)](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingModel.TryGetShadingFactor(DiGi.Solar.Interfaces.IShadingElement,System.DateTime,double,bool) 'DiGi\.Solar\.Classes\.ShadingModel\.TryGetShadingFactor\(DiGi\.Solar\.Interfaces\.IShadingElement, System\.DateTime, double, bool\)').
+
+The contract edges mirror the per-call method: a null element, a shading-only element, a null face or a NaN face area return false. A zero face area returns true with 0.0 for every stored timestamp (an empty dictionary when the element was never solved: the per-call method answers 0 for any timestamp, the bulk method only enumerates stored timestamps). A receiver without a result relation or with no results returns false.
+
+```csharp
+public bool TryGetShadingFactors(DiGi.Solar.Interfaces.IShadingElement shadingElement, out System.Collections.Generic.Dictionary<System.DateTime,double>? factors);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ShadingModel.TryGetShadingFactors(DiGi.Solar.Interfaces.IShadingElement,System.Collections.Generic.Dictionary_System.DateTime,double_).shadingElement'></a>
+
+`shadingElement` [IShadingElement](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingElement 'DiGi\.Solar\.Interfaces\.IShadingElement')
+
+The receiver whose stored results are read\.
+
+<a name='DiGi.Solar.Classes.ShadingModel.TryGetShadingFactors(DiGi.Solar.Interfaces.IShadingElement,System.Collections.Generic.Dictionary_System.DateTime,double_).factors'></a>
+
+`factors` [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime 'System\.DateTime')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')
+
+The shaded fraction of the receiver at each of its stored timestamps when this method returns true; null when it returns false\.
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+True when the receiver has a face with a finite area and its stored results were read \(including the zero\-area case\); false otherwise\.
 
 <a name='DiGi.Solar.Classes.ShadingModel.Update(DiGi.Solar.Interfaces.IShadingElement)'></a>
 
@@ -934,6 +969,29 @@ The collection of shading solver results to associate\.
 #### Returns
 [ShadingSolverResultRelation](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResultRelation 'DiGi\.Solar\.Classes\.ShadingSolverResultRelation')  
 The newly created [ShadingSolverResultRelation](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResultRelation 'DiGi\.Solar\.Classes\.ShadingSolverResultRelation'), or null if any input is null\.
+
+<a name='DiGi.Solar.Classes.ShadingRelationCluster.GetShadingSolverResultRelation(DiGi.Solar.Interfaces.IShadingElement)'></a>
+
+## ShadingRelationCluster\.GetShadingSolverResultRelation\(IShadingElement\) Method
+
+Finds the result relation of the given shading element by comparing the element's unique reference against the From side of every stored result relation\.
+
+Unlike the generic `GetRelation` of the base cluster it never scans a relation's To references, so the cost is linear in the number of relations instead of the number of relations times the number of stored results: reading the results of a solved model with many receivers used to pay that scan once per receiver (ZiolkowskiJakub/DiGi.Solar#13).
+
+```csharp
+public DiGi.Solar.Classes.ShadingSolverResultRelation? GetShadingSolverResultRelation(DiGi.Solar.Interfaces.IShadingElement? shadingElement);
+```
+#### Parameters
+
+<a name='DiGi.Solar.Classes.ShadingRelationCluster.GetShadingSolverResultRelation(DiGi.Solar.Interfaces.IShadingElement).shadingElement'></a>
+
+`shadingElement` [IShadingElement](DiGi.Solar.Interfaces.md#DiGi.Solar.Interfaces.IShadingElement 'DiGi\.Solar\.Interfaces\.IShadingElement')
+
+The shading element whose result relation is looked up\. This value can be null\.
+
+#### Returns
+[ShadingSolverResultRelation](DiGi.Solar.Classes.md#DiGi.Solar.Classes.ShadingSolverResultRelation 'DiGi\.Solar\.Classes\.ShadingSolverResultRelation')  
+The result relation of the element, or null when the element is null or has no result relation\.
 
 <a name='DiGi.Solar.Classes.ShadingRelationCluster.GetShadingSolverResults_TShadingSolverResult_(DiGi.Solar.Classes.ShadingSolverResultRelation)'></a>
 
